@@ -195,10 +195,15 @@ final class SystemMonitor {
     /// Tells the forecaster the battery's current state and energy, which it needs to turn a
     /// power forecast into a battery level forecast.
     private func publishBatteryState(_ b: BatteryInfo) async {
-        let state: [String: Any] = [
+        var state: [String: Any] = [
             "percent": b.percent, "on_ac": b.onAC, "charging": b.isCharging,
             "nominal_mah": b.nominalCapacity, "voltage": b.voltage,
+            "battery_power": b.batteryPower,
+            "not_charging_reason": b.notChargingReason, "slow_charging_reason": b.slowChargingReason,
         ]
+        if b.onAC, let watts = b.adapterWatts { state["adapter_watts"] = watts }
+        if let minutes = b.minutesToFull { state["macos_minutes_to_full"] = minutes }
+        if let minutes = b.minutesToEmpty { state["macos_minutes_to_empty"] = minutes }
         guard b.nominalCapacity > 0, b.voltage > 0,
               let data = try? JSONSerialization.data(withJSONObject: state) else { return }
         await store.setMeta("battery_state", String(decoding: data, as: UTF8.self))

@@ -16,6 +16,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     case systemPower = "sys_power"
     case onAC = "on_ac"
     case charging
+    case adapterWatts = "adapter_w"
     case netIn = "net_in"
     case netOut = "net_out"
     case diskRead = "disk_read"
@@ -38,6 +39,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .systemPower: "System Power"
         case .onAC: "On Power Adapter"
         case .charging: "Charging"
+        case .adapterWatts: "Adapter Rating"
         case .netIn: "Download"
         case .netOut: "Upload"
         case .diskRead: "Disk Read"
@@ -50,7 +52,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .cpu, .gpu, .memUsed, .memPressure, .swap: .fraction
         case .socTemp, .socTempMax, .batteryTemp: .celsius
         case .batteryPercent: .percent
-        case .batteryPower, .systemPower: .watts
+        case .batteryPower, .systemPower, .adapterWatts: .watts
         case .onAC, .charging: .fraction
         case .netIn, .netOut, .diskRead, .diskWrite: .bytesPerSecond
         }
@@ -64,7 +66,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .socTemp, .socTempMax, .batteryTemp: .orange
         case .batteryPercent: .green
         case .batteryPower, .systemPower: .yellow
-        case .onAC, .charging: .gray
+        case .onAC, .charging, .adapterWatts: .gray
         case .netIn, .diskRead: .teal
         case .netOut, .diskWrite: .pink
         }
@@ -94,6 +96,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .systemPower: s.battery?.systemPower
         case .onAC: s.battery.map { $0.onAC ? 1 : 0 }
         case .charging: s.battery.map { $0.isCharging ? 1 : 0 }
+        case .adapterWatts: s.battery.flatMap { $0.onAC ? $0.adapterWatts.map(Double.init) : nil }
         case .netIn: s.netIn
         case .netOut: s.netOut
         case .diskRead: s.diskRead

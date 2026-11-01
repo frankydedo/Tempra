@@ -226,17 +226,19 @@ def battery_forecast(conn, model, model_name, now) -> dict | None:
         median, low, high = unplugged
         summary = {"kind": "time_to_empty", **empty, "horizon": H * step}
     elif state["charging"]:
-        # Forecast the level itself while charging: adapter held on, power as a past covariate.
-        known = np.concatenate([np.concatenate([on_ac_history, np.ones(H, dtype=np.float32)])[None], tod])[None]
-        fc = model.forecast(matrix[None, 4:5], prediction_length=H,
-                            past_covariates=matrix[None, 0:1], known_covariates=known)
-        median, low, high = (np.clip(a, 0, 100) for a in quantiles(fc, 0, percent))
-        # Charging can't go backwards.
-        median, low, high = (np.maximum.accumulate(np.maximum(a, percent)) for a in (median, low, high))
-        summary = {"kind": "time_to_full", "seconds": eta(median, FULL_PCT, False, step),
-                   "low": eta(high, FULL_PCT, False, step), "high": eta(low, FULL_PCT, False, step),
-                   "horizon": H * step, "if_unplugged": empty}
-        covariates = ["system power", "adapter scenario", "time of day"]
+        charge = charge_forecast(conn, state, power_if(plugged=True), energy_wh, now)
+        median, low, high = charge["paths"]
+        target = charge["target"]
+        full = target - 1 if target >= 100 else target - 0.5
+        summary = {"kind": "time_to_full", "target": target,
+                   "seconds": eta(median, full, False, step),
+                   "low": eta(high, full, False, step), "high": eta(low, full, False, step),
+                   "horizon": H * step, "if_unplugged": empty,
+                   "macos_seconds": state.get("macos_minutes_to_full") and state["macos_minutes_to_full"] * 60,
+                   "acceptance": charge["source"]}
+        covariates = ["system power (Timestral)", "adapter %s" % (f"{state['adapter_watts']} W" if state.get("adapter_watts") else "rating unknown"),
+                      "charge acceptance by battery level (%s)" % charge["source"],
+                      "battery energy %.0f Wh" % energy_wh]
     else:
         # Plugged in but not charging (e.g. held at the charge limit): level stays put.
         median = low = high = np.full(H, percent)
@@ -245,6 +247,94 @@ def battery_forecast(conn, model, model_name, now) -> dict | None:
     log(f"battery: {summary['kind']} in {(time.perf_counter() - t0) * 1000:.0f} ms")
     return payload("batt_pct", now, end + step, step, median, low, high,
                    valid_points(power), model_name, summary, covariates=covariates)
+
+
+# MARK: - Charging
+
+ADAPTER_EFFICIENCY = 0.9     # share of the adapter's rating that reaches the Mac
+TAPER_START = 80.0           # Li-ion: constant current up to ~80%, then constant voltage (tapering)
+TAPER_FLOOR = 0.08           # acceptance near 100%, as a share of the constant-current rate
+LEARNED_BIN = 5              # battery-level bins (%) for the learned acceptance curve
+LEARNED_MIN_MINUTES = 10
+
+
+def taper(level: float) -> float:
+    """Prior shape of how much power a Li-ion battery accepts at a given charge level (0–1)."""
+    if level <= TAPER_START:
+        return 1.0
+    return max(TAPER_FLOOR, 1 - (1 - TAPER_FLOOR) * (level - TAPER_START) / (100 - TAPER_START))
+
+
+def learned_acceptance(conn, now) -> dict[int, float]:
+    """Median charging power per battery-level bin, from the last 30 days, using only minutes when
+    the battery (not the adapter) was the limit, i.e. the adapter had headroom left."""
+    rows = conn.execute(
+        "SELECT batt_pct, batt_power, sys_power, adapter_w FROM minute WHERE ts >= ? AND on_ac > 0.5 "
+        "AND ts < ? AND batt_power > 0.5 AND (charging IS NULL OR charging > 0.5)", (now - 30 * 86400, now)).fetchall()
+    bins: dict[int, list[float]] = {}
+    for level, power, system, adapter in rows:
+        if level is None:
+            continue
+        if adapter and system is not None and ADAPTER_EFFICIENCY * adapter - system < power * 1.2:
+            continue  # adapter-limited minute: says nothing about the battery
+        bins.setdefault(int(level // LEARNED_BIN), []).append(power)
+    return {b: float(np.median(v)) for b, v in bins.items() if len(v) >= LEARNED_MIN_MINUTES}
+
+
+def charge_forecast(conn, state, system_power, energy_wh, now) -> dict:
+    """Battery level while charging, from physics:
+        battery power = min(what the battery accepts at its level, what the adapter has left
+                            after the system's own consumption)
+    System power is Timestral's forecast. Acceptance comes from your own charging history where it
+    covers a level, otherwise from a Li-ion taper curve scaled to the current charging power (or,
+    right after plugging in, calibrated so the time to full matches macOS's own estimate)."""
+    level0 = float(state["percent"])
+    step, H = BATTERY_STEP, BATTERY_HORIZON
+    adapter = state.get("adapter_watts")
+    sys_med, sys_low, sys_high = system_power
+    learned = learned_acceptance(conn, now)
+    # Charging is forecast to 100%. Whether macOS will pause at 80% this time (optimized charging)
+    # can't be told from history; when it does, the app switches to the "held" state right away.
+    target = 100.0
+
+    now_power = float(state.get("battery_power") or 0)
+    if now_power > 1:                       # current gauge reading
+        cc_rate = now_power / taper(level0)
+    elif learned:                           # gauge lags right after plugging in
+        cc_rate = float(np.median([p / taper((b + 0.5) * LEARNED_BIN) for b, p in learned.items()]))
+    else:
+        cc_rate = 0.5 * (adapter or 60)
+
+    def accepts(level: float, scale: float) -> float:
+        learned_power = learned.get(int(level // LEARNED_BIN))
+        return scale * (learned_power if learned_power is not None else cc_rate * taper(level))
+
+    def simulate(scale: float, system: np.ndarray) -> np.ndarray:
+        level, path = level0, np.empty(H)
+        for i in range(H):
+            headroom = ADAPTER_EFFICIENCY * adapter - max(system[i], 0) if adapter else np.inf
+            battery_power = max(0.0, min(accepts(level, scale), headroom))
+            level = min(target, level + battery_power * step / 3600 / energy_wh * 100)
+            path[i] = level
+        return path
+
+    source = "learned + Li-ion prior" if learned else "Li-ion prior"
+    scale = 1.0
+    macos = state.get("macos_minutes_to_full")
+    if macos and now_power <= 1 and not learned:
+        # No reading and no history yet: calibrate the prior so it agrees with macOS.
+        for _ in range(4):
+            seconds = eta(simulate(scale, sys_med), FULL_PCT, False, step)
+            if not seconds:
+                scale *= 2
+                continue
+            scale = float(np.clip(scale * seconds / (macos * 60), 0.25, 4.0))
+        source = "Li-ion prior calibrated to macOS"
+
+    median = simulate(scale, sys_med)
+    slow = simulate(scale * 0.85, sys_high)   # battery accepts less, system draws more
+    fast = simulate(scale * 1.10, sys_low)
+    return {"paths": (median, slow, fast), "target": target, "source": source}
 
 
 # MARK: - Battery health

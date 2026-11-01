@@ -30,6 +30,10 @@ enum BatteryReader {
            let load = int(telemetry["SystemLoad"]), load > 0 {
             info.systemPower = Double(load) / 1000
         }
+        if let charger = dict["ChargerData"] as? [String: Any] {
+            info.notChargingReason = int(charger["NotChargingReason"]) ?? 0
+            info.slowChargingReason = int(charger["SlowChargingReason"]) ?? 0
+        }
         if let adapter = dict["AdapterDetails"] as? [String: Any] {
             info.adapterWatts = int(adapter["Watts"])
             info.adapterName = adapter["Name"] as? String ?? adapter["Description"] as? String

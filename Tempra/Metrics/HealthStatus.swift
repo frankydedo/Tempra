@@ -134,7 +134,9 @@ extension Snapshot {
                           b.onAC ? "on adapter" : "on battery", b.percent, b.systemPower ?? 0, b.amperage, b.voltage,
                           b.adapterWatts.map { "\($0) W" } ?? "—", b.runtimeHours.map { String(format: "%.1f h", $0) } ?? "—",
                           String(describing: b.lowBatteryWarning), b.health * 100,
-                          b.healthCondition.map { ", condition \($0)" } ?? "")
+                          (b.healthCondition.map { ", condition \($0)" } ?? "")
+                            + (b.notChargingReason != 0 ? ", not charging reason \(b.notChargingReason)" : "")
+                            + (b.slowChargingReason != 0 ? ", slow charging reason \(b.slowChargingReason)" : ""))
         case .disk:
             return "free \(Format.bytes(Double(diskFree))) of \(Format.bytes(Double(diskTotal)))"
         }

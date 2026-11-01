@@ -87,6 +87,10 @@ struct BatteryInfo: Sendable {
     var lowBatteryWarning: LowBatteryWarning = .none
     /// macOS's battery condition, e.g. "Service Recommended", when it reports one.
     var healthCondition: String?
+    /// Charger flags from AppleSmartBattery's ChargerData: non-zero when macOS is deliberately not
+    /// charging (charge limit, optimized charging, temperature) or charging slowly.
+    var notChargingReason = 0
+    var slowChargingReason = 0
 
     enum LowBatteryWarning: Sendable {
         /// Early: below about 22%. Final: less than about 10 minutes left.

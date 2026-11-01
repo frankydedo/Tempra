@@ -164,10 +164,19 @@ Depending on the state, Tempra shows:
 | State | Shown as |
 |---|---|
 | On battery | "Empty in ~2h 10m (1h 50m–2h 40m)" |
-| Charging | "Full in ~45m", plus how long it would last if you unplugged now |
+| Charging | "Full in ~45m (40m–50m)", plus how long it would last if you unplugged now |
 | On adapter, not charging (e.g. held at the charge limit) | "Held at 80% · ~6h 10m on battery" |
 
-The battery chart shades the periods spent on the power adapter.
+**While charging**, the battery level follows the same idea: the power going into the battery is the
+smaller of what the battery accepts at its current level (constant current up to ~80%, then tapering) and what
+the adapter has left after the system's own consumption, which Timestral forecasts. The acceptance curve is
+learned from your own charging sessions, battery level by battery level; until there is enough history, a
+standard Li-ion taper scaled to the current charging power is used (calibrated to macOS's own estimate right
+after plugging in, when the battery gauge hasn't updated yet). The adapter's rating is read from the charger
+itself (USB-C Power Delivery or MagSafe).
+
+The battery chart shades charging periods in green and time on the adapter without charging (for example
+held at 80% by optimized charging) in yellow.
 
 ### Do forecasts get better over time?
 
