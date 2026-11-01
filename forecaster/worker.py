@@ -121,9 +121,8 @@ def health_forecast(conn: sqlite3.Connection, model, now: float) -> dict | None:
         series[int((day - first) // 86400)] = health
     horizon = 180
     fc = model.forecast(series[None, :], prediction_length=horizon)
-    median = np.asarray(fc.median).reshape(-1)
-    low = np.asarray(fc.quantile(LOW_Q)).reshape(-1)
-    high = np.asarray(fc.quantile(HIGH_Q)).reshape(-1)
+    median, low, high = (np.clip(np.asarray(a, dtype=np.float64).reshape(-1), 0.0, 1.0)
+                         for a in (fc.median, fc.quantile(LOW_Q), fc.quantile(HIGH_Q)))
     i80 = first_crossing(median, 0.8, below=True)
     return {
         "metric": "health", "generated_at": now, "start": float(last + 86400), "step": 86400,
