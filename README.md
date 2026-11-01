@@ -78,7 +78,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 ## Installation
 
 ```bash
-git clone <this repo> Tempra && cd Tempra
+git clone https://github.com/frankydedo/Tempra.git && cd Tempra
 scripts/build.sh --install     # builds Release, copies to /Applications and launches
 ```
 
