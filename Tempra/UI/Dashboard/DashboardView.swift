@@ -167,6 +167,10 @@ struct ForecastsSection: View {
                 }
             }
 
+            Card(title: "Accuracy · last 7 days", systemImage: "scope") {
+                AccuracyTable(accuracy: forecaster.accuracy)
+            }
+
             Card(title: "Battery Health", systemImage: "heart.text.square") {
                 BatteryHealthChart(history: healthHistory, forecast: forecaster.forecasts[ForecastKey.health])
             }
@@ -182,16 +186,70 @@ struct ForecastsSection: View {
     }
 }
 
+/// Compares past forecasts with what really happened.
+struct AccuracyTable: View {
+    let accuracy: [String: ForecastAccuracy]
+
+    private let rows: [(key: String, metric: Metric)] = [
+        (ForecastKey.battery, .batteryPercent), (ForecastKey.cpu, .cpu), (ForecastKey.gpu, .gpu),
+        (ForecastKey.memoryPressure, .memPressure), (ForecastKey.temperature, .socTemp), (ForecastKey.power, .systemPower),
+    ]
+
+    var body: some View {
+        if accuracy.isEmpty {
+            Text("Tempra checks every forecast against what actually happened once its horizon has passed. Results appear after the first hour (12 hours for battery).")
+                .font(.callout).foregroundStyle(.secondary)
+        } else {
+            Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 6) {
+                GridRow {
+                    Text("Forecast")
+                    Text("Typical error")
+                    Text("vs. “no change”")
+                    Text("Inside band")
+                    Text("Checked")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                Divider().gridCellUnsizedAxes(.horizontal)
+                ForEach(rows, id: \.key) { row in
+                    if let a = accuracy[row.key] {
+                        GridRow {
+                            Text(row.metric.title)
+                            Text("±" + row.metric.format(a.mae)).monospacedDigit()
+                            skillText(a.skill).monospacedDigit()
+                            Text(String(format: "%.0f%%", a.coverage * 100)).monospacedDigit()
+                                .foregroundStyle(abs(a.coverage - a.targetCoverage) > 0.2 ? .orange : .primary)
+                            Text("\(a.forecasts)").monospacedDigit().foregroundStyle(.secondary)
+                        }
+                        .font(.callout)
+                    }
+                }
+            }
+            Text("Typical error is the mean absolute difference between forecast and reality. “vs. no change” compares it with simply assuming the current value stays put: positive means Timestral did better. Inside band should be close to 80%, the width of the 10–90% band.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func skillText(_ skill: Double?) -> Text {
+        guard let skill else { return Text("—").foregroundStyle(.secondary) }
+        let text = Text(String(format: "%+.0f%%", skill * 100))
+        return skill < 0 ? text.foregroundStyle(.orange) : text
+    }
+}
+
 struct ForecastCard: View {
     let metric: Metric
     let forecast: Forecast
     var headline: String?
 
+    private var accuracy: ForecastAccuracy? { ForecastService.shared.accuracy[forecast.metric] }
+
     var body: some View {
         Card(title: metric.title, systemImage: "chart.line.uptrend.xyaxis") {
             if let headline { Text(headline).font(.callout) }
             HistoryChart(metric: metric, range: forecast.step >= 300 ? .h24 : .h6, forecast: forecast, height: 160)
-            Text("Generated \(forecast.generatedDate.formatted(.relative(presentation: .named))) from \(forecast.contextPoints) points")
+            Text("Generated \(forecast.generatedDate.formatted(.relative(presentation: .named))) from \(forecast.contextPoints) points"
+                 + (accuracy.map { " · typical error ±\(metric.format($0.mae)) over the last 7 days" } ?? ""))
                 .font(.caption2).foregroundStyle(.secondary)
             if let covariates = forecast.covariates, !covariates.isEmpty {
                 Text("Conditioned on: " + covariates.joined(separator: " · "))

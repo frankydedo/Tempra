@@ -5,15 +5,22 @@ Reads Tempra's history database, forecasts the next hours with Mistral's Timestr
 where the app picks them up.
 
 Forecasts are multivariate:
-  * System block (1-minute steps, next hour): CPU, GPU, memory pressure, SoC temperature and
+  * System block (1-minute steps, 14 days of context, next hour): CPU, GPU, memory pressure, SoC temperature and
     system power are forecast jointly as variates of one series, so the model can use how they
     move together. Whether the Mac is on its adapter is a past covariate; time of day is a
     known-future covariate.
-  * Battery block (5-minute steps, next 12 hours): Timestral forecasts system power together
+  * Battery block (5-minute steps, 30 days of context, next 12 hours): Timestral forecasts system power together
     with CPU and GPU load under an explicit power-source scenario (known-future covariate).
     Battery level is then derived from that power and the battery's energy (mAh × V), which
     stays physically consistent even before the history contains many discharges. While
     charging, the battery level itself is forecast with power and adapter state as covariates.
+
+Longer contexts let Timestral see daily and weekly habits. The model itself never changes
+(zero-shot); forecasts improve as the history it reads grows, up to these windows.
+
+Accuracy: a snapshot of each forecast is kept until its horizon has passed, then scored against
+what actually happened (mean absolute error, a naive "nothing changes" baseline, and how often
+reality fell inside the 10–90% band). A 7-day summary is published for the app.
 
 Run once:      python worker.py --db <history.sqlite> --once
 Run as daemon: python worker.py --db <history.sqlite> --interval 60 --parent-pid <pid>
@@ -33,8 +40,8 @@ import numpy as np
 
 LOW_Q, HIGH_Q = 0.1, 0.9
 
-# System block: 1-minute resolution, 3 days of context, 1 hour ahead.
-SYSTEM_STEP, SYSTEM_CONTEXT, SYSTEM_HORIZON, SYSTEM_MIN_POINTS = 60, 3 * 1440, 60, 60
+# System block: 1-minute resolution, 14 days of context (two full weeks), 1 hour ahead.
+SYSTEM_STEP, SYSTEM_CONTEXT, SYSTEM_HORIZON, SYSTEM_MIN_POINTS = 60, 14 * 1440, 60, 60
 SYSTEM_VARIATES = {  # column -> clip range of the forecast
     "cpu": (0.0, 1.0),
     "gpu": (0.0, 1.0),
@@ -43,8 +50,8 @@ SYSTEM_VARIATES = {  # column -> clip range of the forecast
     "sys_power": (0.0, None),
 }
 
-# Battery block: 5-minute resolution, 7 days of context, 12 hours ahead.
-BATTERY_STEP, BATTERY_CONTEXT, BATTERY_HORIZON, BATTERY_MIN_POINTS = 300, 7 * 288, 144, 24
+# Battery block: 5-minute resolution, 30 days of context (all minute history), 12 hours ahead.
+BATTERY_STEP, BATTERY_CONTEXT, BATTERY_HORIZON, BATTERY_MIN_POINTS = 300, 30 * 288, 144, 24
 EMPTY_PCT, FULL_PCT = 3.0, 99.0
 
 
@@ -257,12 +264,112 @@ def health_forecast(conn, model, model_name, now) -> dict | None:
                                 "days_to_80": None if i80 is None else i80 + 1})
 
 
+# MARK: - Accuracy
+
+SCORED_METRICS = {"cpu", "gpu", "mem_pressure", "soc_temp", "sys_power", "batt_pct"}
+SNAPSHOT_INTERVAL = 15 * 60          # keep one forecast per metric every 15 minutes for scoring
+ACCURACY_WINDOW = 7 * 86400          # the app shows the last 7 days
+SCORE_RETENTION = 90 * 86400
+
+
+def ensure_accuracy_tables(conn) -> None:
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS forecast_log (
+        metric TEXT, generated_at REAL, start REAL, step REAL, median TEXT, low TEXT, high TEXT,
+        PRIMARY KEY (metric, generated_at));
+    CREATE TABLE IF NOT EXISTS forecast_scores (
+        metric TEXT, generated_at REAL, points INTEGER, mae REAL, naive_mae REAL, coverage REAL,
+        PRIMARY KEY (metric, generated_at));
+    """)
+
+
+def snapshot_forecasts(conn, results, now) -> None:
+    """Keeps a copy of each forecast (at most every SNAPSHOT_INTERVAL) until it can be scored."""
+    for p in results:
+        metric = p["metric"]
+        if metric not in SCORED_METRICS:
+            continue
+        # A battery level held at the charge limit is not a real prediction; don't let it inflate accuracy.
+        if metric == "batt_pct" and (p.get("summary") or {}).get("kind") == "held":
+            continue
+        last = conn.execute(
+            "SELECT MAX(t) FROM (SELECT MAX(generated_at) AS t FROM forecast_log WHERE metric = ? "
+            "UNION ALL SELECT MAX(generated_at) FROM forecast_scores WHERE metric = ?)", (metric, metric)).fetchone()[0]
+        if last is not None and now - last < SNAPSHOT_INTERVAL:
+            continue
+        conn.execute("INSERT OR REPLACE INTO forecast_log VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     (metric, now, p["start"], p["step"], json.dumps(p["median"]),
+                      json.dumps(p["low"]), json.dumps(p["high"])))
+
+
+def actual_values(conn, column, start, step, count) -> np.ndarray:
+    rows = conn.execute(
+        f"SELECT CAST(ts / ? AS INTEGER) * ? AS b, AVG({column}) FROM minute "
+        f"WHERE ts >= ? AND ts < ? AND {column} IS NOT NULL GROUP BY b",
+        (step, step, start, start + count * step)).fetchall()
+    values = np.full(count, np.nan)
+    for bucket, value in rows:
+        i = int(round((bucket - start) / step))
+        if 0 <= i < count:
+            values[i] = value
+    return values
+
+
+def score_due_forecasts(conn, now) -> int:
+    """Scores logged forecasts whose horizon has fully passed, then drops their snapshot."""
+    scored = 0
+    for metric, generated_at, start, step, median, low, high in conn.execute(
+            "SELECT metric, generated_at, start, step, median, low, high FROM forecast_log").fetchall():
+        median, low, high = (np.array(json.loads(a)) for a in (median, low, high))
+        n = len(median)
+        if start + n * step > now - 60:  # wait for the last minute to be rolled up
+            continue
+        actual = actual_values(conn, metric, start, step, n)
+        anchor = actual_values(conn, metric, start - step, step, 1)[0]
+        valid = ~np.isnan(actual)
+        if metric == "batt_pct":
+            # Battery forecasts assume the adapter state at forecast time; score only until it changes.
+            adapter = actual_values(conn, "on_ac", start - step, step, n + 1)
+            known = adapter[~np.isnan(adapter)]
+            if known.size:
+                state = np.round(known[0])
+                changed = np.cumsum(np.nan_to_num(np.abs(np.round(adapter[1:]) - state), nan=0) > 0) > 0
+                valid &= ~changed
+        conn.execute("DELETE FROM forecast_log WHERE metric = ? AND generated_at = ?", (metric, generated_at))
+        if valid.sum() < max(3, n // 2):
+            continue  # Tempra wasn't running for most of the horizon
+        a = actual[valid]
+        mae = float(np.mean(np.abs(median[valid] - a)))
+        naive = None if np.isnan(anchor) else float(np.mean(np.abs(anchor - a)))
+        coverage = float(np.mean((low[valid] <= a) & (a <= high[valid])))
+        conn.execute("INSERT OR REPLACE INTO forecast_scores VALUES (?, ?, ?, ?, ?, ?)",
+                     (metric, generated_at, int(valid.sum()), mae, naive, coverage))
+        scored += 1
+    conn.execute("DELETE FROM forecast_scores WHERE generated_at < ?", (now - SCORE_RETENTION,))
+    conn.execute("DELETE FROM forecast_log WHERE generated_at < ?", (now - 2 * 86400,))
+    return scored
+
+
+def publish_accuracy(conn, now) -> None:
+    """7-day summary per metric: typical error, skill vs. "nothing changes", band coverage."""
+    summary = {}
+    for metric, count, mae, naive_sum, mae_sum, coverage, since in conn.execute(
+            "SELECT metric, COUNT(*), AVG(mae), SUM(naive_mae), SUM(CASE WHEN naive_mae IS NOT NULL THEN mae END), "
+            "AVG(coverage), MIN(generated_at) FROM forecast_scores WHERE generated_at >= ? GROUP BY metric",
+            (now - ACCURACY_WINDOW,)).fetchall():
+        skill = None if not naive_sum else 1 - (mae_sum or 0) / naive_sum
+        summary[metric] = {"forecasts": count, "mae": mae, "skill": skill, "coverage": coverage,
+                           "target_coverage": HIGH_Q - LOW_Q, "since": since}
+    set_meta(conn, "forecast_accuracy", json.dumps(summary))
+
+
 # MARK: - Loop
 
 def run_once(db_path: str, model, model_name: str) -> None:
     now = time.time()
     conn = connect(db_path)
     try:
+        ensure_accuracy_tables(conn)
         results = []
         for block in (system_forecasts, battery_forecast, health_forecast):
             try:
@@ -279,6 +386,10 @@ def run_once(db_path: str, model, model_name: str) -> None:
             for p in results:
                 conn.execute("INSERT OR REPLACE INTO forecasts (metric, generated_at, payload) VALUES (?, ?, ?)",
                              (p["metric"], now, json.dumps(p)))
+            snapshot_forecasts(conn, results, now)
+            if score_due_forecasts(conn, now):
+                log("accuracy: scored past forecasts")
+            publish_accuracy(conn, now)
             set_meta(conn, "forecaster_last_run", str(now))
             set_meta(conn, "forecaster_error", "")
             set_meta(conn, "forecaster_model", model_name)

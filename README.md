@@ -152,8 +152,8 @@ battery. Tempra's forecasts use those links instead of predicting each metric on
 
 | Block | Steps · context · horizon | Targets | Conditioned on |
 |---|---|---|---|
-| **System** | 1 min · 3 days · 1 h | CPU, GPU, memory pressure, SoC temperature and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
-| **Battery** | 5 min · 7 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
+| **System** | 1 min · 14 days · 1 h | CPU, GPU, memory pressure, SoC temperature and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
+| **Battery** | 5 min · 30 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
 | **Battery health** | 1 day · all · 180 days | Maximum capacity | — |
 
 **Battery level** comes from a hybrid model: Timestral forecasts the power the Mac will draw, and Tempra
@@ -169,8 +169,27 @@ Depending on the state, Tempra shows:
 
 The battery chart shades the periods spent on the power adapter.
 
+### Do forecasts get better over time?
+
+Yes, up to a point. Timestral is zero-shot: its weights never change and it is not trained on your data.
+What grows is the history it reads. With two weeks of context for the system block it can see daily and
+weekly habits; with 30 days of battery history, your real discharge patterns. Beyond those windows older
+data is not used, so forecasts keep adapting to how you use your Mac now.
+
+### Accuracy
+
+Tempra checks its own forecasts. It keeps a copy of each forecast every 15 minutes and, once the horizon has
+passed, compares it with what actually happened. **Forecasts → Accuracy** shows, for the last 7 days:
+
+- **Typical error**: mean absolute difference between forecast and reality, in the metric's unit.
+- **vs. "no change"**: how much better (or worse) Timestral did than simply assuming the current value stays put.
+- **Inside band**: how often reality fell inside the 10–90% band. A well-calibrated forecast is close to 80%.
+
+Battery forecasts are scored only while the adapter state stays the same as when they were made, and the
+"held at the charge limit" state is not scored, since it isn't a real prediction.
+
 Forecasts appear after about an hour of history (two hours for battery, two weeks of daily samples for
-battery health) and refresh every minute. You can switch between **Timestral 5M** and **28M** in Settings.
+battery health) and refresh every minute. On an M4 a full refresh takes under a second of CPU time. You can switch between **Timestral 5M** and **28M** in Settings.
 
 ## Architecture
 
@@ -223,7 +242,7 @@ history from **Settings → Data**.
 - [ ] Covariate-aware forecasts: CPU and GPU load as past covariates for battery and temperature, time-of-day and weekday as known covariates
 - [ ] Learn charging habits and suggest when to unplug to preserve battery health
 - [ ] Run Timestral natively through Core ML on the Neural Engine, removing the Python dependency
-- [ ] Forecast accuracy report comparing past forecasts with what actually happened
+- [x] Forecast accuracy report comparing past forecasts with what actually happened
 
 **App**
 - [ ] Desktop and Notification Center widgets (WidgetKit)

@@ -65,6 +65,19 @@ struct Forecast: Decodable, Sendable {
     }
 }
 
+/// How past forecasts compared with what actually happened (last 7 days), computed by the worker.
+struct ForecastAccuracy: Decodable, Sendable {
+    let forecasts: Int
+    /// Mean absolute error, in the metric's own unit.
+    let mae: Double
+    /// 1 − error / error of assuming nothing changes. Positive = better than that baseline.
+    let skill: Double?
+    /// Share of actual values inside the forecast band (ideally `targetCoverage`).
+    let coverage: Double
+    let targetCoverage: Double
+    let since: Double
+}
+
 /// Keys used for forecasts in the database.
 enum ForecastKey {
     static let battery = "batt_pct"
@@ -116,6 +129,7 @@ final class ForecastService {
 
     private(set) var status: Status = .notInstalled
     private(set) var forecasts: [String: Forecast] = [:]
+    private(set) var accuracy: [String: ForecastAccuracy] = [:]
     private(set) var lastRun: Date?
     private(set) var installLog = ""
 
@@ -269,6 +283,10 @@ final class ForecastService {
             }
         }
         forecasts = decoded
+        if let json = await store.meta("forecast_accuracy"),
+           let value = try? decoder.decode([String: ForecastAccuracy].self, from: Data(json.utf8)) {
+            accuracy = value
+        }
 
         if let value = await store.meta("forecaster_last_run"), let t = Double(value) {
             lastRun = Date(timeIntervalSince1970: t)
