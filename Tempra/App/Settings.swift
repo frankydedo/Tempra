@@ -20,7 +20,7 @@ enum SettingsKey {
 
 /// What the menu bar item shows next to the icon.
 enum MenuBarDisplay: String, CaseIterable, Identifiable {
-    case iconOnly, cpu, memory, temperature, battery, power
+    case iconOnly, cpu, gpu, memory, temperature, battery, power
 
     var id: String { rawValue }
 
@@ -28,6 +28,7 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         switch self {
         case .iconOnly: "Icon only"
         case .cpu: "CPU usage"
+        case .gpu: "GPU usage"
         case .memory: "Memory pressure"
         case .temperature: "SoC temperature"
         case .battery: "Battery level"
@@ -35,10 +36,35 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         }
     }
 
+    /// SF Symbol that matches the statistic being shown.
+    func symbol(for s: Snapshot) -> String {
+        switch self {
+        case .iconOnly: "waveform.path.ecg"
+        case .cpu: "cpu"
+        case .gpu: "cube"
+        case .memory: "memorychip"
+        case .temperature: "thermometer.medium"
+        case .battery: s.battery.map(Self.batterySymbol) ?? "battery.100percent"
+        case .power: "bolt.fill"
+        }
+    }
+
+    static func batterySymbol(_ b: BatteryInfo) -> String {
+        if b.isCharging { return "battery.100percent.bolt" }
+        switch b.percent {
+        case 88...: return "battery.100percent"
+        case 63..<88: return "battery.75percent"
+        case 38..<63: return "battery.50percent"
+        case 13..<38: return "battery.25percent"
+        default: return "battery.0percent"
+        }
+    }
+
     func text(for s: Snapshot) -> String? {
         switch self {
         case .iconOnly: nil
         case .cpu: Metric.cpu.format(s.cpuTotal)
+        case .gpu: s.gpu.map(Metric.gpu.format)
         case .memory: Metric.memPressure.format(s.memPressure)
         case .temperature: s.socTemp.map(Metric.socTemp.format)
         case .battery: s.battery.map { Metric.batteryPercent.format($0.percent) }

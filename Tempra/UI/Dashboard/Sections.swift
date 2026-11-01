@@ -65,6 +65,40 @@ private struct CoreBars: View {
     }
 }
 
+// MARK: - GPU
+
+struct GPUSection: View {
+    let range: TimeRange
+    private let monitor = SystemMonitor.shared
+    private let forecaster = ForecastService.shared
+
+    var body: some View {
+        let s = monitor.latest
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 32) {
+                BigStat(label: "Utilization", value: s.gpu.map(Metric.gpu.format) ?? "—", color: Metric.gpu.color)
+                BigStat(label: "Renderer", value: Metric.gpu.format(s.gpuRenderer))
+                BigStat(label: "Tiler", value: Metric.gpu.format(s.gpuTiler))
+                BigStat(label: "Unified memory in use", value: Format.bytes(s.gpuMemoryInUse))
+            }
+
+            Card(title: "History", systemImage: "chart.xyaxis.line") {
+                HistoryChart(metric: .gpu, range: range, forecast: forecaster.forecast(for: .gpu), height: 220)
+            }
+
+            Card(title: "Details", systemImage: "info.circle") {
+                if let info = GPUReader.info {
+                    InfoRow(label: "Model", value: info.model)
+                    InfoRow(label: "GPU cores", value: "\(info.coreCount)")
+                }
+                InfoRow(label: "Memory allocated", value: Format.bytes(s.gpuMemoryAllocated))
+                Text("Renderer covers pixel and compute work, Tiler covers geometry. The GPU shares the Mac's unified memory, so its usage also counts towards Memory.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 // MARK: - Memory
 
 struct MemorySection: View {

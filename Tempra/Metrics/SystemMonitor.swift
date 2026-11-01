@@ -18,6 +18,14 @@ actor Sampler {
         s.efficiencyCoreCount = cpu.efficiencyCoreCount
         s.loadAverage = CPUReader.loadAverage()
 
+        if let g = GPUReader.read() {
+            s.gpu = g.utilization
+            s.gpuRenderer = g.renderer
+            s.gpuTiler = g.tiler
+            s.gpuMemoryInUse = g.memoryInUse
+            s.gpuMemoryAllocated = g.memoryAllocated
+        }
+
         if let m = MemoryReader.read() {
             s.memTotal = m.total
             s.memUsed = m.used

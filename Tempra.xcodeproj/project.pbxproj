@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C618D4A0ADA204DE95CDFE1 /* GPUReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E790887196C70537A5A3C1F4 /* GPUReader.swift */; };
 		14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757F9FE28A4A37A8126C3099 /* ForecastService.swift */; };
 		1498765876B423226746F435 /* TempraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */; };
 		1C76B3DE579D8CE4F04CC0CC /* Charts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1922F1CDB94A0BCCBFC4522 /* Charts.swift */; };
@@ -59,6 +60,7 @@
 		D153CC51BD62D140C2DBDB56 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
 		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
+		E790887196C70537A5A3C1F4 /* GPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUReader.swift; sourceTree = "<group>"; };
 		EC7B4E5AC4373D6B284DB35C /* Tempra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -68,6 +70,7 @@
 			children = (
 				E58817591800ADE36E48A22B /* BatteryReader.swift */,
 				B7320A3B02D3505C3DA36573 /* CPUReader.swift */,
+				E790887196C70537A5A3C1F4 /* GPUReader.swift */,
 				77CEE481C0E5AACF68B87EB8 /* IOReader.swift */,
 				2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */,
 				ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */,
@@ -262,6 +265,7 @@
 				2086BC8806DA54007E8DF682 /* DashboardView.swift in Sources */,
 				BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */,
 				14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */,
+				0C618D4A0ADA204DE95CDFE1 /* GPUReader.swift in Sources */,
 				3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */,
 				83CF944330412764A4436855 /* IOReader.swift in Sources */,
 				461517966B348F2B8100C02F /* MemoryReader.swift in Sources */,

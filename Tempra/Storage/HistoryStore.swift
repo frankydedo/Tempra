@@ -53,6 +53,24 @@ actor HistoryStore {
         CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
         """
         sqlite3_exec(db, schema, nil, nil, nil)
+        Self.migrate(db, columns: columns)
+    }
+
+    /// Adds columns for metrics introduced after the database was created.
+    private static func migrate(_ db: OpaquePointer?, columns: [String]) {
+        for table in ["raw", "minute", "hour"] {
+            var existing = Set<String>()
+            var stmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, "PRAGMA table_info(\(table))", -1, &stmt, nil) == SQLITE_OK {
+                while sqlite3_step(stmt) == SQLITE_ROW {
+                    if let name = sqlite3_column_text(stmt, 1) { existing.insert(String(cString: name)) }
+                }
+            }
+            sqlite3_finalize(stmt)
+            for column in columns where !existing.contains(column) {
+                sqlite3_exec(db, "ALTER TABLE \(table) ADD COLUMN \(column) REAL", nil, nil, nil)
+            }
+        }
     }
 
     // MARK: Writing

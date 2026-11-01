@@ -12,6 +12,13 @@ struct Snapshot: Sendable {
     var efficiencyCoreCount = 0
     var loadAverage: (Double, Double, Double) = (0, 0, 0)
 
+    // GPU (fractions 0...1, memory in bytes)
+    var gpu: Double?
+    var gpuRenderer: Double = 0
+    var gpuTiler: Double = 0
+    var gpuMemoryInUse: UInt64 = 0
+    var gpuMemoryAllocated: UInt64 = 0
+
     // Memory (bytes)
     var memTotal: UInt64 = 0
     var memUsed: UInt64 = 0

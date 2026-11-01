@@ -74,7 +74,7 @@ struct MenuBarLabel: View {
     var body: some View {
         let mode = MenuBarDisplay(rawValue: display) ?? .cpu
         HStack(spacing: 4) {
-            Image(systemName: "waveform.path.ecg")
+            Image(systemName: monitor.hasSample ? mode.symbol(for: monitor.latest) : MenuBarDisplay.iconOnly.symbol(for: monitor.latest))
             if monitor.hasSample, let text = mode.text(for: monitor.latest) {
                 Text(text).monospacedDigit()
             }

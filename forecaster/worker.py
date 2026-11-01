@@ -41,6 +41,7 @@ SPECS = [
     Spec("batt_pct", "batt_pct", "minute", 300, 7 * 288, 144, 24, (0.0, 100.0)),
     # Load, pressure, temperature and power: 1-minute resolution, next hour from the last 3 days.
     Spec("cpu", "cpu", "minute", 60, 3 * 1440, 60, 60, (0.0, 1.0)),
+    Spec("gpu", "gpu", "minute", 60, 3 * 1440, 60, 60, (0.0, 1.0)),
     Spec("mem_pressure", "mem_pressure", "minute", 60, 3 * 1440, 60, 60, (0.0, 1.0)),
     Spec("soc_temp", "soc_temp", "minute", 60, 3 * 1440, 60, 60, (0.0, 120.0)),
     Spec("sys_power", "sys_power", "minute", 60, 3 * 1440, 60, 60, (0.0, None)),
@@ -139,7 +140,11 @@ def run_once(db_path: str, model, model_name: str) -> None:
     try:
         ready = []
         for spec in SPECS:
-            series, end = load_series(conn, spec, now)
+            try:
+                series, end = load_series(conn, spec, now)
+            except sqlite3.OperationalError as exc:  # e.g. a column the app hasn't migrated yet
+                log(f"{spec.key}: skipped ({exc})")
+                continue
             if np.sum(~np.isnan(series)) < spec.min_points:
                 log(f"{spec.key}: collecting data ({np.sum(~np.isnan(series))}/{spec.min_points} points)")
                 continue

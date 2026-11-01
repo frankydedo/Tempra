@@ -56,6 +56,7 @@ struct Forecast: Decodable, Sendable {
 enum ForecastKey {
     static let battery = "batt_pct"
     static let cpu = "cpu"
+    static let gpu = "gpu"
     static let memoryPressure = "mem_pressure"
     static let temperature = "soc_temp"
     static let power = "sys_power"
@@ -65,6 +66,7 @@ enum ForecastKey {
         switch metric {
         case .batteryPercent: battery
         case .cpu: cpu
+        case .gpu: gpu
         case .memPressure: memoryPressure
         case .socTemp: temperature
         case .systemPower: power

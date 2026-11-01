@@ -19,6 +19,7 @@ enum DebugSnapshots {
             let sections: [(String, AnyView)] = [
                 ("overview", AnyView(OverviewSection(range: range))),
                 ("cpu", AnyView(CPUSection(range: range))),
+                ("gpu", AnyView(GPUSection(range: range))),
                 ("memory", AnyView(MemorySection(range: range))),
                 ("thermals", AnyView(ThermalSection(range: range))),
                 ("battery", AnyView(BatterySection(range: range))),

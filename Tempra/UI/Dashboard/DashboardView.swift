@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum DashboardSection: String, CaseIterable, Identifiable {
-    case overview, cpu, memory, thermals, battery, io, processes, forecasts
+    case overview, cpu, gpu, memory, thermals, battery, io, processes, forecasts
 
     var id: String { rawValue }
 
@@ -9,6 +9,7 @@ enum DashboardSection: String, CaseIterable, Identifiable {
         switch self {
         case .overview: "Overview"
         case .cpu: "CPU"
+        case .gpu: "GPU"
         case .memory: "Memory"
         case .thermals: "Thermals"
         case .battery: "Battery & Power"
@@ -22,6 +23,7 @@ enum DashboardSection: String, CaseIterable, Identifiable {
         switch self {
         case .overview: "square.grid.2x2"
         case .cpu: "cpu"
+        case .gpu: "cube"
         case .memory: "memorychip"
         case .thermals: "thermometer.medium"
         case .battery: "battery.75percent"
@@ -41,7 +43,7 @@ struct DashboardView: View {
         NavigationSplitView {
             List(selection: Binding(get: { section }, set: { section = $0 ?? .overview })) {
                 Section("Monitor") {
-                    ForEach([DashboardSection.overview, .cpu, .memory, .thermals, .battery, .io, .processes]) { s in
+                    ForEach([DashboardSection.overview, .cpu, .gpu, .memory, .thermals, .battery, .io, .processes]) { s in
                         Label(s.title, systemImage: s.icon).tag(s)
                     }
                 }
@@ -57,6 +59,7 @@ struct DashboardView: View {
                     switch section {
                     case .overview: OverviewSection(range: range)
                     case .cpu: CPUSection(range: range)
+                    case .gpu: GPUSection(range: range)
                     case .memory: MemorySection(range: range)
                     case .thermals: ThermalSection(range: range)
                     case .battery: BatterySection(range: range)
@@ -97,6 +100,8 @@ struct OverviewSection: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                 StatTile(title: "CPU", systemImage: "cpu", value: Metric.cpu.format(s.cpuTotal),
                          detail: String(format: "Load %.2f · %.2f · %.2f", s.loadAverage.0, s.loadAverage.1, s.loadAverage.2))
+                StatTile(title: "GPU", systemImage: "cube", value: s.gpu.map(Metric.gpu.format) ?? "—",
+                         detail: "\(Format.bytes(s.gpuMemoryInUse)) GPU memory")
                 StatTile(title: "Memory pressure", systemImage: "memorychip", value: Metric.memPressure.format(s.memPressure),
                          detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))")
                 StatTile(title: "SoC temperature", systemImage: "thermometer.medium", value: s.socTemp.map(Metric.socTemp.format) ?? "—",
@@ -104,10 +109,16 @@ struct OverviewSection: View {
                 StatTile(title: "Battery", systemImage: "battery.75percent",
                          value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
                          detail: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? s.batteryStateText)
+                StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
+                         detail: "Whole system")
+                StatTile(title: "Network", systemImage: "network", value: "↓ " + Metric.netIn.format(s.netIn),
+                         detail: "↑ " + Metric.netOut.format(s.netOut))
+                StatTile(title: "Startup disk", systemImage: "internaldrive", value: Format.bytes(Double(s.diskFree)),
+                         detail: "available of \(Format.bytes(Double(s.diskTotal)))")
             }
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
-                ForEach([Metric.cpu, .memPressure, .socTemp, .systemPower, .batteryPercent, .netIn], id: \.self) { metric in
+                ForEach([Metric.cpu, .gpu, .memPressure, .socTemp, .systemPower, .batteryPercent], id: \.self) { metric in
                     Card(title: metric.title) {
                         HistoryChart(metric: metric, range: range, forecast: forecaster.forecast(for: metric), height: 140)
                     }
@@ -145,7 +156,7 @@ struct ForecastsSection: View {
             if let battery = forecaster.forecasts[ForecastKey.battery] {
                 ForecastCard(metric: .batteryPercent, forecast: battery, headline: battery.batteryText)
             }
-            ForEach([(Metric.cpu, ForecastKey.cpu), (.memPressure, ForecastKey.memoryPressure),
+            ForEach([(Metric.cpu, ForecastKey.cpu), (.gpu, ForecastKey.gpu), (.memPressure, ForecastKey.memoryPressure),
                      (.socTemp, ForecastKey.temperature), (.systemPower, ForecastKey.power)], id: \.1) { metric, key in
                 if let f = forecaster.forecasts[key] {
                     ForecastCard(metric: metric, forecast: f,

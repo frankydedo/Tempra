@@ -16,6 +16,9 @@ struct SummaryView: View {
                 StatTile(title: "CPU", systemImage: "cpu", value: Metric.cpu.format(s.cpuTotal),
                          detail: String(format: "Load %.2f", s.loadAverage.0),
                          color: Metric.cpu.color, points: monitor.live[.cpu] ?? [], domain: 0...1)
+                StatTile(title: "GPU", systemImage: "cube", value: s.gpu.map(Metric.gpu.format) ?? "—",
+                         detail: "Memory \(Format.bytes(s.gpuMemoryInUse))",
+                         color: Metric.gpu.color, points: monitor.live[.gpu] ?? [], domain: 0...1)
                 StatTile(title: "Memory", systemImage: "memorychip", value: Metric.memPressure.format(s.memPressure),
                          detail: "\(Format.bytes(s.memUsed)) of \(Format.bytes(s.memTotal)) · \(s.memPressureLevel.label)",
                          color: Metric.memPressure.color, points: monitor.live[.memPressure] ?? [], domain: 0...1)
@@ -23,17 +26,15 @@ struct SummaryView: View {
                          value: s.socTemp.map(Metric.socTemp.format) ?? "—",
                          detail: s.socTempMax.map { "Hotspot \(Metric.socTemp.format($0)) · \(s.thermalStateText)" },
                          color: Metric.socTemp.color, points: monitor.live[.socTemp] ?? [])
-                StatTile(title: "Battery", systemImage: batteryIcon(s), value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
+                StatTile(title: "Battery", systemImage: s.battery.map(MenuBarDisplay.batterySymbol) ?? "battery.0percent", value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
                          detail: batteryDetail(s),
                          color: Metric.batteryPercent.color, points: monitor.live[.batteryPercent] ?? [])
                 StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
                          detail: powerDetail(s),
                          color: Metric.systemPower.color, points: monitor.live[.systemPower] ?? [])
-                StatTile(title: "Network", systemImage: "network",
-                         value: "↓ " + Metric.netIn.format(s.netIn),
-                         detail: "↑ " + Metric.netOut.format(s.netOut),
-                         color: Metric.netIn.color, points: monitor.live[.netIn] ?? [])
             }
+
+            ioRow(s)
 
             forecastCard
 
@@ -134,16 +135,16 @@ struct SummaryView: View {
         openWindow(id: TempraApp.dashboardWindowID)
     }
 
-    private func batteryIcon(_ s: Snapshot) -> String {
-        guard let b = s.battery else { return "battery.0percent" }
-        if b.isCharging { return "battery.100percent.bolt" }
-        switch b.percent {
-        case 75...: return "battery.100percent"
-        case 50..<75: return "battery.75percent"
-        case 25..<50: return "battery.50percent"
-        case 10..<25: return "battery.25percent"
-        default: return "battery.0percent"
+    /// One compact line for network and disk, which matter less at a glance.
+    private func ioRow(_ s: Snapshot) -> some View {
+        HStack(spacing: 14) {
+            Label("↓ \(Metric.netIn.format(s.netIn))  ↑ \(Metric.netOut.format(s.netOut))", systemImage: "network")
+            Spacer()
+            Label("\(Format.bytes(Double(s.diskFree))) free", systemImage: "internaldrive")
         }
+        .font(.caption.monospacedDigit())
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 4)
     }
 
     private func batteryDetail(_ s: Snapshot) -> String {
