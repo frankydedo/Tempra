@@ -16,5 +16,5 @@ codesign --verify --strict build/Tempra.app
 
 rm -f "$ZIP"
 ditto -c -k --sequesterRsrc --keepParent build/Tempra.app "$ZIP"
-shasum -a 256 "$ZIP" | tee "$ZIP.sha256"
+(cd build && shasum -a 256 "${ZIP:t}") | tee "$ZIP.sha256"
 echo "Packaged $ZIP"
