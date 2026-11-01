@@ -39,6 +39,7 @@
 		CFBD67FA85A4AC91DBFF07E9 /* Aurora.png in Resources */ = {isa = PBXBuildFile; fileRef = 4A56F20BAD6BF5990AB93FE6 /* Aurora.png */; };
 		D4120F8177BC58AB42591163 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */; };
 		D95FF3EBEBB6BE7C4CBBD096 /* Dawn.png in Resources */ = {isa = PBXBuildFile; fileRef = 37725207CB017A263B4ACA81 /* Dawn.png */; };
+		DB48A326397865F44477F14F /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56F4E54C30A6C73000190D8 /* Log.swift */; };
 		E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726520B9486067D858AAE61A /* Metric.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 		CD25654E591CEDEF675931FF /* HealthStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthStatus.swift; sourceTree = "<group>"; };
 		D153CC51BD62D140C2DBDB56 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
+		E56F4E54C30A6C73000190D8 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
 		E790887196C70537A5A3C1F4 /* GPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUReader.swift; sourceTree = "<group>"; };
 		EC7B4E5AC4373D6B284DB35C /* Tempra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempra.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -207,6 +209,7 @@
 			children = (
 				5DD5439B8AEB329B5E43DF5C /* AppIcon.swift */,
 				282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */,
+				E56F4E54C30A6C73000190D8 /* Log.swift */,
 				4D7039293397FD5EE0BA08FA /* Settings.swift */,
 				6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */,
 			);
@@ -320,6 +323,7 @@
 				A6B72B0D339196B5E190C0D7 /* HealthStatus.swift in Sources */,
 				3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */,
 				83CF944330412764A4436855 /* IOReader.swift in Sources */,
+				DB48A326397865F44477F14F /* Log.swift in Sources */,
 				461517966B348F2B8100C02F /* MemoryReader.swift in Sources */,
 				E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */,
 				6651CEFA21BF8FADF66CD4E6 /* ProcessReader.swift in Sources */,

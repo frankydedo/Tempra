@@ -112,6 +112,30 @@ extension Snapshot {
         }
     }
 
+    /// The values behind a state, for logs ("why did this turn Critical?").
+    func healthDetail(_ metric: HealthMetric, live: [Metric: [ChartPoint]]) -> String {
+        switch metric {
+        case .cpu:
+            return String(format: "CPU %.0f%%, 1-min avg %.0f%%", cpuTotal * 100, (Self.recentAverage(live[.cpu]) ?? cpuTotal) * 100)
+        case .gpu:
+            return String(format: "GPU %.0f%%, 1-min avg %.0f%%", (gpu ?? 0) * 100, (Self.recentAverage(live[.gpu]) ?? gpu ?? 0) * 100)
+        case .memory:
+            return String(format: "pressure %.0f%% (%@), used %@, swap %@", memPressure * 100, memPressureLevel.label,
+                          Format.bytes(memUsed), Format.bytes(swapUsed))
+        case .thermal:
+            return String(format: "thermal state %@, SoC %.0f°C, hotspot %.0f°C", thermalStateText, socTemp ?? 0, socTempMax ?? 0)
+        case .battery, .batteryHealth, .power:
+            guard let b = battery else { return "no battery" }
+            return String(format: "%@, %.0f%%, system %.1f W, battery %.2f A × %.2f V, adapter %@, runtime %@, low-battery warning %@, health %.1f%%%@",
+                          b.onAC ? "on adapter" : "on battery", b.percent, b.systemPower ?? 0, b.amperage, b.voltage,
+                          b.adapterWatts.map { "\($0) W" } ?? "—", b.runtimeHours.map { String(format: "%.1f h", $0) } ?? "—",
+                          String(describing: b.lowBatteryWarning), b.health * 100,
+                          b.healthCondition.map { ", condition \($0)" } ?? "")
+        case .disk:
+            return "free \(Format.bytes(Double(diskFree))) of \(Format.bytes(Double(diskTotal)))"
+        }
+    }
+
     private static func loadState(_ value: Double) -> HealthState {
         if value > HealthRules.loadCritical { return .critical }
         return value >= HealthRules.loadWarning ? .warning : .normal

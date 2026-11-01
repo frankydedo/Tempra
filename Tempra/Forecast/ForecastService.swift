@@ -127,7 +127,16 @@ final class ForecastService {
         }
     }
 
-    private(set) var status: Status = .notInstalled
+    private(set) var status: Status = .notInstalled {
+        didSet {
+            guard status != oldValue else { return }
+            if case .failed(let message) = status {
+                Log.error(.forecast, "Forecaster failed: \(message)")
+            } else {
+                Log.info(.forecast, "Forecaster status: \(status.label)")
+            }
+        }
+    }
     private(set) var forecasts: [String: Forecast] = [:]
     private(set) var accuracy: [String: ForecastAccuracy] = [:]
     private(set) var lastRun: Date?
@@ -140,7 +149,7 @@ final class ForecastService {
 
     static var directory: URL { HistoryStore.directory.appendingPathComponent("forecaster", isDirectory: true) }
     static var python: URL { directory.appendingPathComponent(".venv/bin/python") }
-    static var logURL: URL { HistoryStore.directory.appendingPathComponent("forecaster.log") }
+    static var logURL: URL { Log.directory.appendingPathComponent("forecaster.log") }
 
     var isInstalled: Bool { FileManager.default.isExecutableFile(atPath: Self.python.path) }
 
@@ -207,6 +216,7 @@ final class ForecastService {
         }
         process.terminationHandler = { [weak self] proc in
             Task { @MainActor in
+                Log.notice(.forecast, "Forecaster process \(proc.processIdentifier) exited (code \(proc.terminationStatus))")
                 guard let self, self.worker === proc else { return }
                 self.worker = nil
                 if proc.terminationReason != .exit || proc.terminationStatus != 0 {
@@ -219,6 +229,7 @@ final class ForecastService {
             try process.run()
             worker = process
             status = .starting
+            Log.notice(.forecast, "Forecaster started (pid \(process.processIdentifier), \(model)); output in \(Self.logURL.path)")
         } catch {
             status = .failed(error.localizedDescription)
         }
@@ -230,6 +241,7 @@ final class ForecastService {
     func install() {
         guard installer == nil else { return }
         copyBundledFiles()
+        Log.notice(.forecast, "Installing forecasting engine")
         status = .installing
         installLog = ""
 
@@ -255,9 +267,11 @@ final class ForecastService {
                 pipe.fileHandleForReading.readabilityHandler = nil
                 self.installer = nil
                 if proc.terminationStatus == 0 {
+                    Log.notice(.forecast, "Forecasting engine installed")
                     self.status = .notInstalled
                     self.launchWorkerIfPossible()
                 } else {
+                    Log.error(.forecast, "Installation failed:\n" + self.installLog.split(separator: "\n").suffix(15).joined(separator: "\n"))
                     self.status = .failed("installation failed, see the log below")
                 }
             }
@@ -281,6 +295,10 @@ final class ForecastService {
             if let forecast = try? decoder.decode(Forecast.self, from: data) {
                 decoded[key] = forecast
             }
+        }
+        if let old = forecasts[ForecastKey.battery]?.summary?.kind, let new = decoded[ForecastKey.battery],
+           let kind = new.summary?.kind, kind != old {
+            Log.notice(.forecast, "Battery forecast: \(old) → \(kind): \(new.batteryText ?? "—")")
         }
         forecasts = decoded
         if let json = await store.meta("forecast_accuracy"),

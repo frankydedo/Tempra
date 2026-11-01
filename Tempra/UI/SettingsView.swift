@@ -145,7 +145,7 @@ private struct ForecastSettings: View {
                 }
                 HStack {
                     Button("Show Engine Folder") { NSWorkspace.shared.open(ForecastService.directory) }
-                    Button("Show Log") { NSWorkspace.shared.open(ForecastService.logURL) }
+                    Button("Show Logs") { NSWorkspace.shared.open(Log.directory) }
                 }
             }
         }

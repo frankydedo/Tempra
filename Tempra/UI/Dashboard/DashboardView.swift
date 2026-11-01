@@ -124,6 +124,8 @@ struct OverviewSection: View {
                 ForEach([Metric.cpu, .gpu, .memPressure, .socTemp, .systemPower, .batteryPercent], id: \.self) { metric in
                     Card(title: metric.title) {
                         HistoryChart(metric: metric, range: range, forecast: forecaster.forecast(for: metric), height: 140)
+                            // Same height for every card, whether or not the chart has a legend below it.
+                            .frame(height: 162, alignment: .top)
                     }
                 }
             }

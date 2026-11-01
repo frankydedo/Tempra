@@ -12,12 +12,18 @@ struct StatTile: View {
     var state: HealthState = .normal
 
     var body: some View {
+        // Every row has a fixed height so tiles line up regardless of the icon's shape
+        // (a battery symbol is shorter than a chip) or whether a state badge is shown.
         VStack(alignment: .leading, spacing: 4) {
-            Label(title, systemImage: systemImage)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .labelStyle(.titleAndIcon)
-                .lineLimit(1)
+            HStack(spacing: 5) {
+                Image(systemName: systemImage)
+                    .frame(width: 16)
+                Text(title)
+                    .lineLimit(1)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(height: 16)
             HStack(alignment: .firstTextBaseline) {
                 Text(value)
                     .font(.title3.weight(.semibold).monospacedDigit())
@@ -28,13 +34,13 @@ struct StatTile: View {
                 Spacer(minLength: 4)
                 StateBadge(state: state)
             }
-            if let detail {
-                Text(detail)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
+            .frame(height: 26)
+            Text(detail ?? " ")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(height: 14)
             if !points.isEmpty {
                 Sparkline(points: points, color: color, domain: domain)
                     .frame(height: 26)

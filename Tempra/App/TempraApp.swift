@@ -30,6 +30,9 @@ struct TempraApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         SettingsKey.registerDefaults()
+        let info = Bundle.main.infoDictionary
+        Log.notice(.app, "Tempra \(info?["CFBundleShortVersionString"] ?? "?") (\(info?["CFBundleVersion"] ?? "?")) started on "
+                   + "\(CPUReader.chipName), \(Format.bytes(MemoryReader.totalMemory)), macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
         AppIconManager.restore()
         Task { @MainActor in
             SystemMonitor.shared.start()
@@ -48,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        Log.notice(.app, "Tempra quitting")
         MainActor.assumeIsolated { ForecastService.shared.stop() }
     }
 

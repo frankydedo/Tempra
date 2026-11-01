@@ -261,6 +261,15 @@ history from **Settings → Data**.
 
 ## Development notes
 
+Tempra logs state changes (adapter plugged or unplugged, health state transitions with the values behind
+them, forecaster lifecycle, battery forecast changes) to `~/Library/Logs/Tempra/Tempra.log` and to the macOS
+unified log. The forecaster writes to `~/Library/Logs/Tempra/forecaster.log`.
+
+```bash
+tail -f ~/Library/Logs/Tempra/Tempra.log
+/usr/bin/log stream --predicate 'subsystem == "com.fdedominicis.tempra"'
+```
+
 The app icons are Icon Composer documents generated from code, so every variant shares the same geometry:
 
 ```bash

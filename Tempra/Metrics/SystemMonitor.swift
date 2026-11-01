@@ -85,10 +85,13 @@ final class SystemMonitor {
     private var loop: Task<Void, Never>?
     private var lastRollUp = Date.distantPast
     private var lastHealthRecord = Date.distantPast
+    private var lastHealth: [HealthMetric: HealthState] = [:]
 
     private init() {}
 
     func start() {
+        let interval = UserDefaults.standard.double(forKey: SettingsKey.sampleInterval)
+        Log.notice(.monitor, "Sampling every \(Int(interval > 0 ? interval : SettingsKey.defaultSampleInterval)) s")
         loop?.cancel()
         loop = Task { [weak self] in
             await self?.seedLive()
@@ -107,6 +110,7 @@ final class SystemMonitor {
 
     private func tick() async {
         let snapshot = await sampler.sample()
+        if hasSample { logChanges(from: latest, to: snapshot) }
         latest = snapshot
         hasSample = true
         appendLive(snapshot)
@@ -125,6 +129,27 @@ final class SystemMonitor {
         }
         if processesVisible {
             await refreshProcesses()
+        }
+    }
+
+    /// Logs adapter and charging changes, and every health state transition with the values behind it.
+    private func logChanges(from old: Snapshot, to new: Snapshot) {
+        if let before = old.battery, let after = new.battery {
+            if before.onAC != after.onAC {
+                Log.notice(.battery, (after.onAC ? "Adapter connected" : "Adapter disconnected")
+                    + String(format: " at %.0f%% (battery gauge: %.2f A, system %.1f W)", after.percent, after.amperage, after.systemPower ?? 0))
+            }
+            if before.isCharging != after.isCharging {
+                Log.notice(.battery, (after.isCharging ? "Charging started" : "Charging stopped") + String(format: " at %.0f%%", after.percent))
+            }
+        }
+        for metric in HealthMetric.allCases {
+            let state = new.health(metric, live: live)
+            if let previous = lastHealth[metric], previous != state {
+                let message = "\(metric): \(previous.label) → \(state.label) (\(new.healthDetail(metric, live: live)))"
+                state == .normal ? Log.info(.health, message) : Log.notice(.health, message)
+            }
+            lastHealth[metric] = state
         }
     }
 

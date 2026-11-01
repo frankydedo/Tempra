@@ -37,6 +37,7 @@ actor HistoryStore {
     init() {
         try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
         if sqlite3_open(Self.databaseURL.path, &db) != SQLITE_OK {
+            Log.error(.store, "Could not open \(Self.databaseURL.path): \(String(cString: sqlite3_errmsg(db)))")
             db = nil
             return
         }
