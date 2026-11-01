@@ -32,6 +32,10 @@ private struct GeneralSettings: View {
             }
             .onChange(of: interval) { SystemMonitor.shared.restart() }
 
+            Section("App Icon") {
+                AppIconPicker()
+            }
+
             Toggle("Open Tempra at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in
                     do {
@@ -47,6 +51,54 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+private struct AppIconPicker: View {
+    @State private var selection = AppIconManager.current
+    @State private var bundleUpdated = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                ForEach(AppIconChoice.allCases) { choice in
+                    Button {
+                        selection = choice
+                        bundleUpdated = AppIconManager.apply(choice)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Group {
+                                if let image = choice.image {
+                                    Image(nsImage: image).resizable().interpolation(.high)
+                                } else {
+                                    Image(nsImage: NSApp.applicationIconImage).resizable()
+                                }
+                            }
+                            .frame(width: 54, height: 54)
+                            .padding(4)
+                            .background {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(selection == choice ? Color.accentColor.opacity(0.18) : .clear)
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(selection == choice ? Color.accentColor : .clear, lineWidth: 2)
+                            }
+                            Text(choice.title)
+                                .font(.caption)
+                                .foregroundStyle(selection == choice ? .primary : .secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .help(choice == .default ? "\(choice.title) (default)" : choice.title)
+                }
+            }
+            if !bundleUpdated {
+                Text("The Dock icon changed, but Tempra couldn't update its icon in Finder. Move the app to /Applications and try again.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

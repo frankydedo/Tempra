@@ -5,6 +5,7 @@ enum SettingsKey {
     static let sampleInterval = "sampleInterval"
     static let forecastModel = "forecastModel"
     static let forecastEnabled = "forecastEnabled"
+    static let appIcon = "appIcon"
 
     static let defaultSampleInterval: Double = 3
 

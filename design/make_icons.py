@@ -137,7 +137,14 @@ def write(name, spec):
     return doc
 
 
+# The variant compiled into the app as its primary icon (Settings can switch to the others).
+DEFAULT = "Horizon-Night"
+APP_ICON = pathlib.Path(__file__).parent.parent / "Tempra" / "Resources" / "AppIcon.icon"
+
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     for name, spec in VARIANTS.items():
         print(write(name, spec))
+    shutil.rmtree(APP_ICON, ignore_errors=True)
+    shutil.copytree(OUT / f"Tempra-{DEFAULT}.icon", APP_ICON)
+    print(APP_ICON)

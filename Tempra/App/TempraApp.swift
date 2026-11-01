@@ -30,6 +30,7 @@ struct TempraApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         SettingsKey.registerDefaults()
+        AppIconManager.restore()
         Task { @MainActor in
             SystemMonitor.shared.start()
             ForecastService.shared.start()

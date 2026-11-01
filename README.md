@@ -1,6 +1,6 @@
 <div align="center">
 
-<!-- App icon goes here once the design is final: <img src="docs/icon.png" width="128" alt="Tempra icon"> -->
+<img src="docs/icon.png" width="160" alt="Tempra app icon">
 
 # Tempra
 
@@ -33,6 +33,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 🔮 **Forecasts with Timestral** | Probabilistic forecasts (10th–90th percentile bands): time to empty or full, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
 | 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes about 13 ms per forecast on CPU, every 5 minutes. |
+| 🎨 **Liquid Glass icon** | Designed in Icon Composer, with six variants (Night, Bands, Dawn, Sky, Pulse, Graphite) to pick from in Settings. |
 | 🔒 **Private** | No accounts, no telemetry, no network calls except the one-time model download. |
 
 ### What Tempra measures
@@ -139,8 +140,10 @@ Tempra/
 ├── Metrics/        Readers for CPU, GPU, memory, thermals, battery, I/O, processes
 ├── Storage/        SQLite history (raw → minute → hour) and metric definitions
 ├── Forecast/       Launches the Python worker and reads its forecasts
+├── Resources/      AppIcon.icon (Icon Composer) and alternate icon renders
 └── UI/             Summary panel, dashboard sections, charts, settings
 forecaster/         Timestral worker, pyproject and setup script
+design/             Icon generator, Icon Composer documents and previews
 scripts/build.sh    Release build and install
 ```
 
@@ -181,6 +184,16 @@ history from **Settings → Data**.
 - `ps` reports process CPU as a percentage of one core, like Activity Monitor.
 
 ## Development notes
+
+The app icons are Icon Composer documents generated from code, so every variant shares the same geometry:
+
+```bash
+python3 design/make_icons.py   # writes design/icons/*.icon and Tempra/Resources/AppIcon.icon (default)
+design/export_icons.sh         # renders them with ictool for the Settings picker and docs/icon.png
+swift design/contact_sheet.swift design/horizon-variants.png   # side-by-side preview
+```
+
+Open any `.icon` in Icon Composer (bundled with Xcode) to fine-tune its Liquid Glass settings.
 
 Debug builds can render every view to PNG without screen-recording permission, which is how the screenshots
 above were produced:
