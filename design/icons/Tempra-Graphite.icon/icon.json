@@ -1,0 +1,105 @@
+{
+  "fill": {
+    "linear-gradient": [
+      "display-p3:0.33000,0.34000,0.37000,1.00000",
+      "display-p3:0.10000,0.11000,0.12000,1.00000"
+    ],
+    "orientation": {
+      "start": {
+        "x": 0.5,
+        "y": 0
+      },
+      "stop": {
+        "x": 0.5,
+        "y": 1
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "history",
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "history.svg",
+          "name": "history"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.2
+      },
+      "specular": true
+    },
+    {
+      "name": "band-inner",
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "band-inner.svg",
+          "name": "band-inner",
+          "opacity": 0.9
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      },
+      "specular": true
+    },
+    {
+      "name": "band-mid",
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "band-mid.svg",
+          "name": "band-mid",
+          "opacity": 0.55
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.7
+      },
+      "specular": true
+    },
+    {
+      "name": "band-outer",
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "band-outer.svg",
+          "name": "band-outer",
+          "opacity": 0.35
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.8
+      },
+      "specular": true
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}

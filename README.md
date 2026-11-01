@@ -33,7 +33,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 🔮 **Forecasts with Timestral** | Probabilistic forecasts (10th–90th percentile bands): time to empty or full, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
 | 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes about 13 ms per forecast on CPU, every 5 minutes. |
-| 🎨 **Liquid Glass icon** | Designed in Icon Composer, with six variants (Night, Bands, Dawn, Sky, Pulse, Graphite) to pick from in Settings. |
+| 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
 | 🔒 **Private** | No accounts, no telemetry, no network calls except the one-time model download. |
 
 ### What Tempra measures
@@ -190,7 +190,7 @@ The app icons are Icon Composer documents generated from code, so every variant 
 ```bash
 python3 design/make_icons.py   # writes design/icons/*.icon and Tempra/Resources/AppIcon.icon (default)
 design/export_icons.sh         # renders them with ictool for the Settings picker and docs/icon.png
-swift design/contact_sheet.swift design/horizon-variants.png   # side-by-side preview
+swift design/contact_sheet.swift design/icon-variants.png   # side-by-side preview
 ```
 
 Open any `.icon` in Icon Composer (bundled with Xcode) to fine-tune its Liquid Glass settings.

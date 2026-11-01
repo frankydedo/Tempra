@@ -74,8 +74,8 @@ private struct AppIconPicker: View {
                                     Image(nsImage: NSApp.applicationIconImage).resizable()
                                 }
                             }
-                            .frame(width: 54, height: 54)
-                            .padding(4)
+                            .frame(width: 64, height: 64)
+                            .padding(2)
                             .background {
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                     .fill(selection == choice ? Color.accentColor.opacity(0.18) : .clear)

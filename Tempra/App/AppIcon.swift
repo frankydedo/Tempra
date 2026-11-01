@@ -1,30 +1,22 @@
 import AppKit
 
-/// The app icon variants the user can pick in Settings. `night` is compiled into the bundle
-/// (Tempra/Resources/AppIcon.icon); the others are Icon Composer renders shipped as PNGs
-/// (see design/export_icons.sh).
+/// The app icon variants the user can pick in Settings. They share one drawing (a history line
+/// flowing into three forecast bands) and differ only in palette and glass style. `indigo` is
+/// compiled into the bundle (Tempra/Resources/AppIcon.icon); the others are Icon Composer renders
+/// shipped as PNGs (see design/make_icons.py and design/export_icons.sh).
 enum AppIconChoice: String, CaseIterable, Identifiable {
-    case night = "Horizon-Night"
-    case bands = "Horizon-Bands"
-    case dawn = "Horizon-Dawn"
-    case sky = "Horizon-Sky"
-    case pulse = "Horizon-Pulse"
-    case graphite = "Horizon-Graphite"
+    case indigo = "Indigo"
+    case night = "Night"
+    case dawn = "Dawn"
+    case aurora = "Aurora"
+    case sky = "Sky"
+    case graphite = "Graphite"
 
-    static let `default` = AppIconChoice.night
+    static let `default` = AppIconChoice.indigo
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .night: "Night"
-        case .bands: "Bands"
-        case .dawn: "Dawn"
-        case .sky: "Sky"
-        case .pulse: "Pulse"
-        case .graphite: "Graphite"
-        }
-    }
+    var title: String { rawValue }
 
     var image: NSImage? {
         Bundle.main.url(forResource: rawValue, withExtension: "png").flatMap(NSImage.init(contentsOf:))
@@ -52,9 +44,15 @@ enum AppIconManager {
     /// its custom Finder icon, so restore it when it is missing.
     static func restore() {
         let choice = current
-        guard choice != .default else { return }
-        NSApp.applicationIconImage = choice.image
         let marker = (Bundle.main.bundlePath as NSString).appendingPathComponent("Icon\r")
+        guard choice != .default else {
+            // Drop a custom icon left over from a variant that no longer exists.
+            if FileManager.default.fileExists(atPath: marker) {
+                NSWorkspace.shared.setIcon(nil, forFile: Bundle.main.bundlePath, options: [])
+            }
+            return
+        }
+        NSApp.applicationIconImage = choice.image
         if !FileManager.default.fileExists(atPath: marker) {
             NSWorkspace.shared.setIcon(choice.image, forFile: Bundle.main.bundlePath, options: [])
         }

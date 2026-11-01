@@ -9,8 +9,15 @@ cd "$(dirname "$0")/.."
 ICTOOL="$(xcode-select -p)/../Applications/Icon Composer.app/Contents/Executables/ictool"
 [[ -x "$ICTOOL" ]] || ICTOOL="/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool"
 
-render() { "$ICTOOL" "$1" --export-image --output-file "$2" --platform macOS --rendition Default \
-  --width "$3" --height "$3" --scale 1 >/dev/null; }
+# ictool renders the icon body edge to edge, but macOS icons sit on a grid where the body is
+# 824/1024 of the canvas with a transparent margin. Render the body at that size and pad it,
+# so alternate icons match the compiled AppIcon's size in the Dock and Finder.
+render() {
+  local canvas=$3 body=$(( $3 * 824 / 1024 ))
+  "$ICTOOL" "$1" --export-image --output-file "$2" --platform macOS --rendition Default \
+    --width "$body" --height "$body" --scale 1 >/dev/null
+  sips -p "$canvas" "$canvas" "$2" >/dev/null
+}
 
 OUT=Tempra/Resources/AlternateIcons
 rm -rf "$OUT" && mkdir -p "$OUT"

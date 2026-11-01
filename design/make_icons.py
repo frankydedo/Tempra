@@ -10,11 +10,9 @@ import shutil
 
 OUT = pathlib.Path(__file__).parent / "icons"
 
-# Shared geometry on the 1024 pt canvas: history on the left, "now" at NOW, forecast fan to the right.
+# Shared geometry on the 1024 pt canvas: history on the left, "now" at NOW, forecast cones to the right.
 NOW = (540, 470)
 HISTORY = "M170 690 C 235 690, 250 590, 315 590 S 395 660, 435 640 S 495 470, 540 470"
-ECG = "M165 560 L 290 560 L 330 450 L 385 680 L 440 500 L 475 560 L 540 470"
-MEDIAN_DOTS = [(615, 462), (690, 452), (765, 440), (840, 426)]
 
 
 def fan(spread_top, spread_bottom, end_x=872):
@@ -39,14 +37,6 @@ def shape(path, color, opacity=1.0):
     return svg(f'<path d="{path}" fill="{color}" fill-opacity="{opacity}"/>')
 
 
-def dots(color="#FFFFFF", r=21):
-    return svg("".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{color}"/>' for x, y in MEDIAN_DOTS))
-
-
-def now_dot(color="#FFFFFF", r=46):
-    return svg(f'<circle cx="{NOW[0]}" cy="{NOW[1]}" r="{r}" fill="{color}"/>')
-
-
 def p3(r, g, b, a=1.0):
     return f"display-p3:{r:.5f},{g:.5f},{b:.5f},{a:.5f}"
 
@@ -66,59 +56,34 @@ def group(name, image, *, translucency=0.5, shadow="neutral", shadow_opacity=0.5
             "specular": True}
 
 
+def bands(top, bottom, outer, mid, inner, *, line="#FFFFFF", opacities=(0.75, 0.85, 1.0),
+          translucency=(0.6, 0.5, 0.35), shadow="layer-color"):
+    """Tempra's icon: a history line flowing into three nested forecast cones (the 10–90,
+    25–75 and 40–60 percentile bands). Variants only change palette and glass style."""
+    return dict(
+        fill=gradient(top, bottom),
+        groups=[
+            group("history", stroke(HISTORY, line), translucency=0.2),
+            group("band-inner", shape(fan(70, 60), inner), translucency=translucency[2],
+                  shadow=shadow, shadow_opacity=0.5, opacity=opacities[2]),
+            group("band-mid", shape(fan(160, 145), mid), translucency=translucency[1],
+                  shadow=shadow, shadow_opacity=0.5, opacity=opacities[1]),
+            group("band-outer", shape(fan(260, 240), outer), translucency=translucency[0],
+                  shadow=shadow, shadow_opacity=0.5, opacity=opacities[0]),
+        ])
+
+
+# Tinted variants colour each band; frosted variants use white glass at three densities.
+FROSTED = dict(opacities=(0.35, 0.55, 0.9), translucency=(0.8, 0.7, 0.4), shadow="neutral")
+
 VARIANTS = {
-    # Deep night sky, cyan forecast cone: the original proposal C.
-    "Horizon-Night": dict(
-        fill=gradient((0.13, 0.18, 0.38), (0.03, 0.05, 0.14)),
-        groups=[
-            group("now", now_dot("#7CEBFF"), translucency=0.2, shadow="layer-color", shadow_opacity=0.7),
-            group("median", dots(), translucency=0.3),
-            group("history", stroke(HISTORY), translucency=0.25),
-            group("fan", shape(fan(250, 230), "#5BE0FF"), translucency=0.55, shadow="layer-color", shadow_opacity=0.6, opacity=0.85),
-        ]),
-    # Dawn over the horizon: indigo to warm coral, frosted white cone.
-    "Horizon-Dawn": dict(
-        fill=gradient((0.28, 0.30, 0.70), (1.00, 0.52, 0.40)),
-        groups=[
-            group("now", now_dot(), translucency=0.15),
-            group("median", dots(), translucency=0.3),
-            group("history", stroke(HISTORY), translucency=0.2),
-            group("fan", shape(fan(250, 230), "#FFFFFF"), translucency=0.7, opacity=0.6),
-        ]),
-    # Bright system blue, one bold glass cone: closest to Apple's own utility icons.
-    "Horizon-Sky": dict(
-        fill=gradient((0.33, 0.68, 1.00), (0.12, 0.36, 0.96)),
-        groups=[
-            group("history", stroke(HISTORY, width=72), translucency=0.15),
-            group("fan", shape(fan(270, 250), "#FFFFFF"), translucency=0.75, opacity=0.55),
-        ]),
-    # Heartbeat history flowing into the forecast: vital signs + prediction.
-    "Horizon-Pulse": dict(
-        fill=gradient((0.05, 0.22, 0.24), (0.02, 0.07, 0.09)),
-        groups=[
-            group("now", now_dot("#B6FFD9"), translucency=0.15, shadow="layer-color", shadow_opacity=0.7),
-            group("median", dots("#B6FFD9"), translucency=0.3),
-            group("history", stroke(ECG, "#3DEB9A", 62), translucency=0.2, shadow="layer-color", shadow_opacity=0.6),
-            group("fan", shape(fan(250, 230), "#2FD39A"), translucency=0.6, shadow="layer-color", shadow_opacity=0.5, opacity=0.7),
-        ]),
-    # Three stacked glass cones = the quantile bands (10–90, 25–75, 40–60).
-    "Horizon-Bands": dict(
-        fill=gradient((0.20, 0.13, 0.45), (0.06, 0.04, 0.17)),
-        groups=[
-            group("history", stroke(HISTORY), translucency=0.2),
-            group("band-inner", shape(fan(70, 60), "#7CEBFF"), translucency=0.35, shadow="layer-color", shadow_opacity=0.5),
-            group("band-mid", shape(fan(160, 145), "#4F8DFF"), translucency=0.5, shadow="layer-color", shadow_opacity=0.5, opacity=0.85),
-            group("band-outer", shape(fan(260, 240), "#9B7BFF"), translucency=0.6, shadow="layer-color", shadow_opacity=0.5, opacity=0.75),
-        ]),
-    # Graphite and white glass only: quiet, and works best with tinted/clear modes.
-    "Horizon-Graphite": dict(
-        fill=gradient((0.33, 0.34, 0.37), (0.10, 0.11, 0.12)),
-        groups=[
-            group("now", now_dot(), translucency=0.1),
-            group("median", dots(), translucency=0.3),
-            group("history", stroke(HISTORY), translucency=0.15),
-            group("fan", shape(fan(250, 230), "#FFFFFF"), translucency=0.8, opacity=0.4),
-        ]),
+    "Indigo": bands((0.20, 0.13, 0.45), (0.06, 0.04, 0.17), "#9B7BFF", "#4F8DFF", "#7CEBFF"),
+    "Night": bands((0.13, 0.18, 0.38), (0.03, 0.05, 0.14), "#2F6FE0", "#3FB8F0", "#9AF3FF"),
+    "Dawn": bands((0.28, 0.30, 0.70), (1.00, 0.52, 0.40), "#FFB08F", "#FFD2B3", "#FFF4D6",
+                  opacities=(0.6, 0.75, 0.95)),
+    "Aurora": bands((0.05, 0.22, 0.24), (0.02, 0.07, 0.09), "#1FA98A", "#3DEB9A", "#C2FFD9"),
+    "Sky": bands((0.33, 0.68, 1.00), (0.12, 0.36, 0.96), "#FFFFFF", "#FFFFFF", "#FFFFFF", **FROSTED),
+    "Graphite": bands((0.33, 0.34, 0.37), (0.10, 0.11, 0.12), "#FFFFFF", "#FFFFFF", "#FFFFFF", **FROSTED),
 }
 
 
@@ -138,7 +103,7 @@ def write(name, spec):
 
 
 # The variant compiled into the app as its primary icon (Settings can switch to the others).
-DEFAULT = "Horizon-Night"
+DEFAULT = "Indigo"
 APP_ICON = pathlib.Path(__file__).parent.parent / "Tempra" / "Resources" / "AppIcon.icon"
 
 if __name__ == "__main__":

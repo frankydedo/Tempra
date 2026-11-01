@@ -10,61 +10,61 @@
 		0C618D4A0ADA204DE95CDFE1 /* GPUReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E790887196C70537A5A3C1F4 /* GPUReader.swift */; };
 		14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757F9FE28A4A37A8126C3099 /* ForecastService.swift */; };
 		1498765876B423226746F435 /* TempraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */; };
-		15AB10E6B85EBE585D969CC4 /* Horizon-Dawn.png in Resources */ = {isa = PBXBuildFile; fileRef = 95822517C0D2361A6D39CB14 /* Horizon-Dawn.png */; };
 		1C76B3DE579D8CE4F04CC0CC /* Charts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1922F1CDB94A0BCCBFC4522 /* Charts.swift */; };
-		1E11354BD610A08ACFB33FD5 /* Horizon-Pulse.png in Resources */ = {isa = PBXBuildFile; fileRef = 128B1542409753D3C9BB69C1 /* Horizon-Pulse.png */; };
 		2086BC8806DA54007E8DF682 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A13DC16A79768CC4246F4BC /* DashboardView.swift */; };
 		3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2AE23943FDA6134BAF50993 /* HistoryStore.swift */; };
 		3D9E5947C5B492F7E8A9E99E /* Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C522DCEF4FC994D66BF2DB /* Sections.swift */; };
 		461517966B348F2B8100C02F /* MemoryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */; };
 		519E6BFF0D8753053605ADCD /* worker.py in Resources */ = {isa = PBXBuildFile; fileRef = ABD72B5098790E988B517A5E /* worker.py */; };
 		524D6CB0EADAECF0ACE108AE /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 8AA0FBE68734288C7C8BCE49 /* AppIcon.icon */; };
-		554F12D0A5C1ECC8A4CCB7BD /* Horizon-Graphite.png in Resources */ = {isa = PBXBuildFile; fileRef = EB730AB55F5D912DF2F6E234 /* Horizon-Graphite.png */; };
 		5B7837EC822A1C022E17A949 /* AppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD5439B8AEB329B5E43DF5C /* AppIcon.swift */; };
-		602EA5375CE984E91B0E3120 /* Horizon-Sky.png in Resources */ = {isa = PBXBuildFile; fileRef = 174581AD7AB46FA3A255CF53 /* Horizon-Sky.png */; };
 		6651CEFA21BF8FADF66CD4E6 /* ProcessReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */; };
-		6805F1DB2D635DB7AC3EDC63 /* Horizon-Bands.png in Resources */ = {isa = PBXBuildFile; fileRef = 527DFADD751B3B8BAF9E5CC5 /* Horizon-Bands.png */; };
 		6B4FCA02372E80A8266FBD38 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D153CC51BD62D140C2DBDB56 /* SummaryView.swift */; };
 		6DFD496F16A37F9A835708F7 /* CPUReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7320A3B02D3505C3DA36573 /* CPUReader.swift */; };
 		7E802EABD26A8DD582352657 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */; };
 		83CF944330412764A4436855 /* IOReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CEE481C0E5AACF68B87EB8 /* IOReader.swift */; };
+		8CE3DC5DAEA18501031EDFFC /* Indigo.png in Resources */ = {isa = PBXBuildFile; fileRef = BEF5BB73711B7DDB1B340F9E /* Indigo.png */; };
 		8FDE4FD85A1D464C914FEE63 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7039293397FD5EE0BA08FA /* Settings.swift */; };
-		9995819D42C3CB12B65FF026 /* Horizon-Night.png in Resources */ = {isa = PBXBuildFile; fileRef = 8780408CB81E47C72DA56402 /* Horizon-Night.png */; };
 		A7529E9F24CCF0A51569A385 /* setup.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3693C24303A6402F9EEDBD97 /* setup.sh */; };
+		AAC109AA0BBB8C0B3D1117E4 /* Sky.png in Resources */ = {isa = PBXBuildFile; fileRef = 678CB675DB7F52B73F34E021 /* Sky.png */; };
 		B1184CC295ED3B41017FADD2 /* pyproject.toml in Resources */ = {isa = PBXBuildFile; fileRef = 4AD34EC1974E9A796CFD38B4 /* pyproject.toml */; };
 		B4092B3FF03E1E44884B073F /* BatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58817591800ADE36E48A22B /* BatteryReader.swift */; };
 		BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */; };
 		BD337F486A80698930039BA1 /* ThermalReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */; };
 		C707BBE378508D02A643C777 /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04052B909EA02355924185FB /* Snapshot.swift */; };
+		CAA677D418830C4BA1CC12DB /* Night.png in Resources */ = {isa = PBXBuildFile; fileRef = 3DB33BB52CF47815A2D513A5 /* Night.png */; };
 		CCF81FFA5588F0503AC42E63 /* Tiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */; };
+		CD323A45E7B9ADC94AF4294B /* Graphite.png in Resources */ = {isa = PBXBuildFile; fileRef = 4525BB60FD284F064C4089BD /* Graphite.png */; };
+		CFBD67FA85A4AC91DBFF07E9 /* Aurora.png in Resources */ = {isa = PBXBuildFile; fileRef = 4A56F20BAD6BF5990AB93FE6 /* Aurora.png */; };
 		D4120F8177BC58AB42591163 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */; };
+		D95FF3EBEBB6BE7C4CBBD096 /* Dawn.png in Resources */ = {isa = PBXBuildFile; fileRef = 37725207CB017A263B4ACA81 /* Dawn.png */; };
 		E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726520B9486067D858AAE61A /* Metric.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		04052B909EA02355924185FB /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
 		0AE724A836D144EFBABEDB6D /* Tempra-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tempra-Bridging-Header.h"; sourceTree = "<group>"; };
-		128B1542409753D3C9BB69C1 /* Horizon-Pulse.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Pulse.png"; sourceTree = "<group>"; };
-		174581AD7AB46FA3A255CF53 /* Horizon-Sky.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Sky.png"; sourceTree = "<group>"; };
 		1D3248522DAB166218CA2BA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSnapshots.swift; sourceTree = "<group>"; };
 		2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryReader.swift; sourceTree = "<group>"; };
 		3693C24303A6402F9EEDBD97 /* setup.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setup.sh; sourceTree = "<group>"; };
+		37725207CB017A263B4ACA81 /* Dawn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Dawn.png; sourceTree = "<group>"; };
+		3DB33BB52CF47815A2D513A5 /* Night.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Night.png; sourceTree = "<group>"; };
 		440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		4525BB60FD284F064C4089BD /* Graphite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Graphite.png; sourceTree = "<group>"; };
+		4A56F20BAD6BF5990AB93FE6 /* Aurora.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Aurora.png; sourceTree = "<group>"; };
 		4AD34EC1974E9A796CFD38B4 /* pyproject.toml */ = {isa = PBXFileReference; path = pyproject.toml; sourceTree = "<group>"; };
 		4D7039293397FD5EE0BA08FA /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
-		527DFADD751B3B8BAF9E5CC5 /* Horizon-Bands.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Bands.png"; sourceTree = "<group>"; };
 		5DD5439B8AEB329B5E43DF5C /* AppIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIcon.swift; sourceTree = "<group>"; };
 		66E9DBD9AF44E304A717CC98 /* Tempra.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tempra.entitlements; sourceTree = "<group>"; };
+		678CB675DB7F52B73F34E021 /* Sky.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sky.png; sourceTree = "<group>"; };
 		67C522DCEF4FC994D66BF2DB /* Sections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sections.swift; sourceTree = "<group>"; };
 		6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempraApp.swift; sourceTree = "<group>"; };
 		726520B9486067D858AAE61A /* Metric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metric.swift; sourceTree = "<group>"; };
 		757F9FE28A4A37A8126C3099 /* ForecastService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastService.swift; sourceTree = "<group>"; };
 		77CEE481C0E5AACF68B87EB8 /* IOReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOReader.swift; sourceTree = "<group>"; };
-		8780408CB81E47C72DA56402 /* Horizon-Night.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Night.png"; sourceTree = "<group>"; };
 		8A13DC16A79768CC4246F4BC /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8AA0FBE68734288C7C8BCE49 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
-		95822517C0D2361A6D39CB14 /* Horizon-Dawn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Dawn.png"; sourceTree = "<group>"; };
 		ABD72B5098790E988B517A5E /* worker.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = worker.py; sourceTree = "<group>"; };
 		ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessReader.swift; sourceTree = "<group>"; };
 		AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tiles.swift; sourceTree = "<group>"; };
@@ -72,11 +72,11 @@
 		B2AE23943FDA6134BAF50993 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B7320A3B02D3505C3DA36573 /* CPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUReader.swift; sourceTree = "<group>"; };
+		BEF5BB73711B7DDB1B340F9E /* Indigo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Indigo.png; sourceTree = "<group>"; };
 		D153CC51BD62D140C2DBDB56 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
 		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
 		E790887196C70537A5A3C1F4 /* GPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUReader.swift; sourceTree = "<group>"; };
-		EB730AB55F5D912DF2F6E234 /* Horizon-Graphite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Horizon-Graphite.png"; sourceTree = "<group>"; };
 		EC7B4E5AC4373D6B284DB35C /* Tempra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -156,12 +156,12 @@
 		85B8BCBC67DE5CE971CEC9A7 /* AlternateIcons */ = {
 			isa = PBXGroup;
 			children = (
-				527DFADD751B3B8BAF9E5CC5 /* Horizon-Bands.png */,
-				95822517C0D2361A6D39CB14 /* Horizon-Dawn.png */,
-				EB730AB55F5D912DF2F6E234 /* Horizon-Graphite.png */,
-				8780408CB81E47C72DA56402 /* Horizon-Night.png */,
-				128B1542409753D3C9BB69C1 /* Horizon-Pulse.png */,
-				174581AD7AB46FA3A255CF53 /* Horizon-Sky.png */,
+				4A56F20BAD6BF5990AB93FE6 /* Aurora.png */,
+				37725207CB017A263B4ACA81 /* Dawn.png */,
+				4525BB60FD284F064C4089BD /* Graphite.png */,
+				BEF5BB73711B7DDB1B340F9E /* Indigo.png */,
+				3DB33BB52CF47815A2D513A5 /* Night.png */,
+				678CB675DB7F52B73F34E021 /* Sky.png */,
 			);
 			path = AlternateIcons;
 			sourceTree = "<group>";
@@ -287,12 +287,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				524D6CB0EADAECF0ACE108AE /* AppIcon.icon in Resources */,
-				6805F1DB2D635DB7AC3EDC63 /* Horizon-Bands.png in Resources */,
-				15AB10E6B85EBE585D969CC4 /* Horizon-Dawn.png in Resources */,
-				554F12D0A5C1ECC8A4CCB7BD /* Horizon-Graphite.png in Resources */,
-				9995819D42C3CB12B65FF026 /* Horizon-Night.png in Resources */,
-				1E11354BD610A08ACFB33FD5 /* Horizon-Pulse.png in Resources */,
-				602EA5375CE984E91B0E3120 /* Horizon-Sky.png in Resources */,
+				CFBD67FA85A4AC91DBFF07E9 /* Aurora.png in Resources */,
+				D95FF3EBEBB6BE7C4CBBD096 /* Dawn.png in Resources */,
+				CD323A45E7B9ADC94AF4294B /* Graphite.png in Resources */,
+				8CE3DC5DAEA18501031EDFFC /* Indigo.png in Resources */,
+				CAA677D418830C4BA1CC12DB /* Night.png in Resources */,
+				AAC109AA0BBB8C0B3D1117E4 /* Sky.png in Resources */,
 				B1184CC295ED3B41017FADD2 /* pyproject.toml in Resources */,
 				A7529E9F24CCF0A51569A385 /* setup.sh in Resources */,
 				519E6BFF0D8753053605ADCD /* worker.py in Resources */,
