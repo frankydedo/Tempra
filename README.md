@@ -30,6 +30,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | | |
 |---|---|
 | 🧭 **Lives in the menu bar** | An icon plus one live value of your choice (CPU, GPU, memory pressure, temperature, battery or power). The icon follows the statistic you show. |
+| 🚦 **Health at a glance** | Every key metric is Normal, Warning or Critical, using macOS's own signals where they exist. Warning values turn orange, Critical red, in the panel, the dashboard and the menu bar. |
 | 🪟 **Glanceable summary** | Click the icon for a compact panel with the essentials, sparklines and the latest forecasts. |
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
 | 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
@@ -50,6 +51,20 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | **Power** | Whole-system power draw, battery in/out watts, adapter | `AppleSmartBattery` telemetry |
 | **I/O** | Network down/up, disk read/write, free space | `getifaddrs`, `IOBlockStorageDriver` |
 | **Processes** | CPU and resident memory per process | `ps` |
+
+### Health states
+
+| Metric | Source | Warning | Critical |
+|---|---|---|---|
+| Memory | macOS memory pressure (as in Activity Monitor) | Warning | Critical |
+| Temperature | macOS thermal state | Serious (throttling) | Critical |
+| Battery level | macOS low-battery warning | Early (below ~22%) | Final (~10 min left) |
+| Battery health | macOS battery condition, Apple's 80% threshold | Capacity below 80% | Service recommended |
+| CPU, GPU | 1-minute average load | 75–90% | above 90% |
+| Power | Runtime at current draw, or adapter headroom | Under 2 h left, or above 90% of the adapter's rating | Under 1 h left, or battery draining while plugged in |
+| Startup disk | Free space | Under 20 GB or 10% | Under 5 GB or 3% |
+
+Normal is left uncoloured so that Warning and Critical stand out; the state is always written out too.
 
 ## Screenshots
 

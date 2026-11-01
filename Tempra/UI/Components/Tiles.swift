@@ -9,6 +9,7 @@ struct StatTile: View {
     var color: Color = .accentColor
     var points: [ChartPoint] = []
     var domain: ClosedRange<Double>?
+    var state: HealthState = .normal
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -16,11 +17,17 @@ struct StatTile: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .labelStyle(.titleAndIcon)
-            Text(value)
-                .font(.title3.weight(.semibold).monospacedDigit())
-                .contentTransition(.numericText())
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            HStack(alignment: .firstTextBaseline) {
+                Text(value)
+                    .font(.title3.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(state.color ?? .primary)
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                StateBadge(state: state)
+            }
             if let detail {
                 Text(detail)
                     .font(.caption2)
@@ -36,6 +43,22 @@ struct StatTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+/// "Warning" / "Critical" capsule; nothing for Normal. Spelled out so state never relies on colour alone.
+struct StateBadge: View {
+    let state: HealthState
+
+    var body: some View {
+        if let color = state.color {
+            Text(state.label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(color.opacity(0.15), in: Capsule())
+        }
     }
 }
 
@@ -88,14 +111,18 @@ struct BigStat: View {
     let label: String
     let value: String
     var color: Color = .primary
+    var state: HealthState = .normal
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
                 .font(.system(size: 26, weight: .semibold).monospacedDigit())
-                .foregroundStyle(color)
+                .foregroundStyle(state.color ?? color)
                 .contentTransition(.numericText())
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Text(label).font(.caption).foregroundStyle(.secondary)
+                StateBadge(state: state)
+            }
         }
     }
 }

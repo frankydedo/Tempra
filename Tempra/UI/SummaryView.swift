@@ -15,23 +15,29 @@ struct SummaryView: View {
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                 StatTile(title: "CPU", systemImage: "cpu", value: Metric.cpu.format(s.cpuTotal),
                          detail: String(format: "Load %.2f", s.loadAverage.0),
-                         color: Metric.cpu.color, points: monitor.live[.cpu] ?? [], domain: 0...1)
+                         color: Metric.cpu.color, points: monitor.live[.cpu] ?? [], domain: 0...1,
+                         state: monitor.health(.cpu))
                 StatTile(title: "GPU", systemImage: "cube", value: s.gpu.map(Metric.gpu.format) ?? "—",
                          detail: "Memory \(Format.bytes(s.gpuMemoryInUse))",
-                         color: Metric.gpu.color, points: monitor.live[.gpu] ?? [], domain: 0...1)
-                StatTile(title: "Memory", systemImage: "memorychip", value: Metric.memPressure.format(s.memPressure),
-                         detail: "\(Format.bytes(s.memUsed)) of \(Format.bytes(s.memTotal)) · \(s.memPressureLevel.label)",
-                         color: Metric.memPressure.color, points: monitor.live[.memPressure] ?? [], domain: 0...1)
+                         color: Metric.gpu.color, points: monitor.live[.gpu] ?? [], domain: 0...1,
+                         state: monitor.health(.gpu))
+                StatTile(title: "Memory pressure", systemImage: "memorychip", value: Metric.memPressure.format(s.memPressure),
+                         detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))",
+                         color: Metric.memPressure.color, points: monitor.live[.memPressure] ?? [], domain: 0...1,
+                         state: monitor.health(.memory))
                 StatTile(title: "Temperature", systemImage: "thermometer.medium",
                          value: s.socTemp.map(Metric.socTemp.format) ?? "—",
                          detail: s.socTempMax.map { "Hotspot \(Metric.socTemp.format($0)) · \(s.thermalStateText)" },
-                         color: Metric.socTemp.color, points: monitor.live[.socTemp] ?? [])
+                         color: Metric.socTemp.color, points: monitor.live[.socTemp] ?? [],
+                         state: monitor.health(.thermal))
                 StatTile(title: "Battery", systemImage: s.battery.map(MenuBarDisplay.batterySymbol) ?? "battery.0percent", value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
                          detail: batteryDetail(s),
-                         color: Metric.batteryPercent.color, points: monitor.live[.batteryPercent] ?? [])
+                         color: Metric.batteryPercent.color, points: monitor.live[.batteryPercent] ?? [],
+                         state: monitor.health(.battery))
                 StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
                          detail: powerDetail(s),
-                         color: Metric.systemPower.color, points: monitor.live[.systemPower] ?? [])
+                         color: Metric.systemPower.color, points: monitor.live[.systemPower] ?? [],
+                         state: monitor.health(.power))
             }
 
             ioRow(s)
@@ -141,6 +147,7 @@ struct SummaryView: View {
             Label("↓ \(Metric.netIn.format(s.netIn))  ↑ \(Metric.netOut.format(s.netOut))", systemImage: "network")
             Spacer()
             Label("\(Format.bytes(Double(s.diskFree))) free", systemImage: "internaldrive")
+                .foregroundStyle(monitor.health(.disk).color ?? .secondary)
         }
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)

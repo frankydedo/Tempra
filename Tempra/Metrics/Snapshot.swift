@@ -83,6 +83,20 @@ struct BatteryInfo: Sendable {
     var systemPower: Double?
     var adapterWatts: Int?
     var adapterName: String?
+    /// macOS's own low-battery warning (the one behind its "battery low" alerts).
+    var lowBatteryWarning: LowBatteryWarning = .none
+    /// macOS's battery condition, e.g. "Service Recommended", when it reports one.
+    var healthCondition: String?
+
+    enum LowBatteryWarning: Sendable {
+        /// Early: below about 22%. Final: less than about 10 minutes left.
+        case none, early, final
+    }
+
+    var needsService: Bool {
+        guard let condition = healthCondition?.lowercased() else { return false }
+        return condition.contains("service") || condition.contains("check") || condition.contains("fail")
+    }
 
     /// Watts flowing in (+) or out (-) of the battery.
     var batteryPower: Double { voltage * amperage }

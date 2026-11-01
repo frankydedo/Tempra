@@ -12,7 +12,8 @@ struct CPUSection: View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 32) {
-                BigStat(label: "Total", value: Metric.cpu.format(s.cpuTotal), color: Metric.cpu.color)
+                BigStat(label: "Total", value: Metric.cpu.format(s.cpuTotal), color: Metric.cpu.color,
+                        state: monitor.health(.cpu))
                 BigStat(label: "User", value: Metric.cpu.format(s.cpuUser))
                 BigStat(label: "System", value: Metric.cpu.format(s.cpuSystem))
                 BigStat(label: "Load average (1/5/15 min)",
@@ -76,7 +77,8 @@ struct GPUSection: View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 32) {
-                BigStat(label: "Utilization", value: s.gpu.map(Metric.gpu.format) ?? "—", color: Metric.gpu.color)
+                BigStat(label: "Utilization", value: s.gpu.map(Metric.gpu.format) ?? "—", color: Metric.gpu.color,
+                        state: monitor.health(.gpu))
                 BigStat(label: "Renderer", value: Metric.gpu.format(s.gpuRenderer))
                 BigStat(label: "Tiler", value: Metric.gpu.format(s.gpuTiler))
                 BigStat(label: "Unified memory in use", value: Format.bytes(s.gpuMemoryInUse))
@@ -110,8 +112,8 @@ struct MemorySection: View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 32) {
-                BigStat(label: "Pressure (\(s.memPressureLevel.label))", value: Metric.memPressure.format(s.memPressure),
-                        color: pressureColor(s.memPressureLevel))
+                BigStat(label: "Pressure", value: Metric.memPressure.format(s.memPressure),
+                        color: Metric.memPressure.color, state: monitor.health(.memory))
                 BigStat(label: "Used of \(Format.bytes(s.memTotal))", value: Format.bytes(s.memUsed))
                 BigStat(label: "Swap used", value: Format.bytes(s.swapUsed))
             }
@@ -137,13 +139,6 @@ struct MemorySection: View {
         }
     }
 
-    private func pressureColor(_ level: MemoryPressureLevel) -> Color {
-        switch level {
-        case .normal: .green
-        case .warning: .yellow
-        case .critical: .red
-        }
-    }
 }
 
 // MARK: - Thermals
@@ -157,11 +152,12 @@ struct ThermalSection: View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 32) {
-                BigStat(label: "SoC average", value: s.socTemp.map(Metric.socTemp.format) ?? "—", color: .orange)
+                BigStat(label: "SoC average", value: s.socTemp.map(Metric.socTemp.format) ?? "—", color: .orange,
+                        state: monitor.health(.thermal))
                 BigStat(label: "SoC hotspot", value: s.socTempMax.map(Metric.socTemp.format) ?? "—")
                 BigStat(label: "Battery", value: s.batteryTemp.map(Metric.socTemp.format) ?? "—")
                 BigStat(label: "SSD", value: s.ssdTemp.map(Metric.socTemp.format) ?? "—")
-                BigStat(label: "Thermal state", value: s.thermalStateText)
+                BigStat(label: "Thermal state", value: s.thermalStateText, color: .primary, state: monitor.health(.thermal))
             }
             Card(title: "SoC Temperature", systemImage: "thermometer.medium") {
                 HistoryChart(metric: .socTemp, range: range, forecast: forecaster.forecast(for: .socTemp), height: 220)
@@ -187,11 +183,14 @@ struct BatterySection: View {
         VStack(alignment: .leading, spacing: 16) {
             if let b = s.battery {
                 HStack(spacing: 32) {
-                    BigStat(label: s.batteryStateText, value: Metric.batteryPercent.format(b.percent), color: .green)
-                    BigStat(label: "System power", value: b.systemPower.map(Metric.systemPower.format) ?? "—", color: .yellow)
+                    BigStat(label: s.batteryStateText, value: Metric.batteryPercent.format(b.percent), color: .green,
+                            state: monitor.health(.battery))
+                    BigStat(label: "System power", value: b.systemPower.map(Metric.systemPower.format) ?? "—", color: .yellow,
+                            state: monitor.health(.power))
                     BigStat(label: b.batteryPower >= 0 ? "Into battery" : "Out of battery",
                             value: Metric.batteryPower.format(abs(b.batteryPower)))
-                    BigStat(label: "Maximum capacity", value: String(format: "%.0f%%", b.health * 100))
+                    BigStat(label: b.healthCondition.map { "Maximum capacity · \($0)" } ?? "Maximum capacity",
+                            value: String(format: "%.0f%%", b.health * 100), state: monitor.health(.batteryHealth))
                 }
 
                 HStack(alignment: .top, spacing: 16) {
@@ -300,6 +299,7 @@ struct IOSection: View {
                 BigStat(label: "Upload", value: Metric.netOut.format(s.netOut), color: .pink)
                 BigStat(label: "Disk read", value: Metric.diskRead.format(s.diskRead))
                 BigStat(label: "Disk write", value: Metric.diskWrite.format(s.diskWrite))
+                BigStat(label: "Free on startup disk", value: Format.bytes(Double(s.diskFree)), state: monitor.health(.disk))
             }
             Card(title: "Startup Disk", systemImage: "internaldrive") {
                 let used = Double(s.diskTotal - s.diskFree)

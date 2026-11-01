@@ -47,8 +47,16 @@ enum BatteryReader {
                 if let empty = int(desc[kIOPSTimeToEmptyKey]), empty > 0 { info.minutesToEmpty = empty }
                 if let full = int(desc[kIOPSTimeToFullChargeKey]), full > 0 { info.minutesToFull = full }
                 if let charging = desc[kIOPSIsChargingKey] as? Bool { info.isCharging = charging }
+                if let condition = desc[kIOPSBatteryHealthConditionKey] as? String, !condition.isEmpty {
+                    info.healthCondition = condition
+                }
                 info.onAC = (desc[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
             }
+        }
+        switch IOPSGetBatteryWarningLevel() {
+        case kIOPSLowBatteryWarningFinal: info.lowBatteryWarning = .final
+        case kIOPSLowBatteryWarningEarly: info.lowBatteryWarning = .early
+        default: info.lowBatteryWarning = .none
         }
         if info.percent == 0, let max = int(dict["MaxCapacity"]), max > 0, let cur = int(dict["CurrentCapacity"]) {
             info.percent = Double(cur) / Double(max) * 100

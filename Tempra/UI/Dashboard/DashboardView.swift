@@ -99,22 +99,25 @@ struct OverviewSection: View {
         VStack(alignment: .leading, spacing: 16) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                 StatTile(title: "CPU", systemImage: "cpu", value: Metric.cpu.format(s.cpuTotal),
-                         detail: String(format: "Load %.2f · %.2f · %.2f", s.loadAverage.0, s.loadAverage.1, s.loadAverage.2))
+                         detail: String(format: "Load %.2f · %.2f · %.2f", s.loadAverage.0, s.loadAverage.1, s.loadAverage.2),
+                         state: monitor.health(.cpu))
                 StatTile(title: "GPU", systemImage: "cube", value: s.gpu.map(Metric.gpu.format) ?? "—",
-                         detail: "\(Format.bytes(s.gpuMemoryInUse)) GPU memory")
+                         detail: "\(Format.bytes(s.gpuMemoryInUse)) GPU memory", state: monitor.health(.gpu))
                 StatTile(title: "Memory pressure", systemImage: "memorychip", value: Metric.memPressure.format(s.memPressure),
-                         detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))")
+                         detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))",
+                         state: monitor.health(.memory))
                 StatTile(title: "SoC temperature", systemImage: "thermometer.medium", value: s.socTemp.map(Metric.socTemp.format) ?? "—",
-                         detail: "Thermal state: \(s.thermalStateText)")
+                         detail: "Thermal state: \(s.thermalStateText)", state: monitor.health(.thermal))
                 StatTile(title: "Battery", systemImage: "battery.75percent",
                          value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
-                         detail: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? s.batteryStateText)
+                         detail: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? s.batteryStateText,
+                         state: monitor.health(.battery))
                 StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
-                         detail: "Whole system")
+                         detail: "Whole system", state: monitor.health(.power))
                 StatTile(title: "Network", systemImage: "network", value: "↓ " + Metric.netIn.format(s.netIn),
                          detail: "↑ " + Metric.netOut.format(s.netOut))
                 StatTile(title: "Startup disk", systemImage: "internaldrive", value: Format.bytes(Double(s.diskFree)),
-                         detail: "available of \(Format.bytes(Double(s.diskTotal)))")
+                         detail: "available of \(Format.bytes(Double(s.diskTotal)))", state: monitor.health(.disk))
             }
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {

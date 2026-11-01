@@ -25,6 +25,7 @@
 		83CF944330412764A4436855 /* IOReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CEE481C0E5AACF68B87EB8 /* IOReader.swift */; };
 		8CE3DC5DAEA18501031EDFFC /* Indigo.png in Resources */ = {isa = PBXBuildFile; fileRef = BEF5BB73711B7DDB1B340F9E /* Indigo.png */; };
 		8FDE4FD85A1D464C914FEE63 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7039293397FD5EE0BA08FA /* Settings.swift */; };
+		A6B72B0D339196B5E190C0D7 /* HealthStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD25654E591CEDEF675931FF /* HealthStatus.swift */; };
 		A7529E9F24CCF0A51569A385 /* setup.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3693C24303A6402F9EEDBD97 /* setup.sh */; };
 		AAC109AA0BBB8C0B3D1117E4 /* Sky.png in Resources */ = {isa = PBXBuildFile; fileRef = 678CB675DB7F52B73F34E021 /* Sky.png */; };
 		B1184CC295ED3B41017FADD2 /* pyproject.toml in Resources */ = {isa = PBXBuildFile; fileRef = 4AD34EC1974E9A796CFD38B4 /* pyproject.toml */; };
@@ -73,6 +74,7 @@
 		B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B7320A3B02D3505C3DA36573 /* CPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUReader.swift; sourceTree = "<group>"; };
 		BEF5BB73711B7DDB1B340F9E /* Indigo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Indigo.png; sourceTree = "<group>"; };
+		CD25654E591CEDEF675931FF /* HealthStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthStatus.swift; sourceTree = "<group>"; };
 		D153CC51BD62D140C2DBDB56 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
 		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 				E58817591800ADE36E48A22B /* BatteryReader.swift */,
 				B7320A3B02D3505C3DA36573 /* CPUReader.swift */,
 				E790887196C70537A5A3C1F4 /* GPUReader.swift */,
+				CD25654E591CEDEF675931FF /* HealthStatus.swift */,
 				77CEE481C0E5AACF68B87EB8 /* IOReader.swift */,
 				2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */,
 				ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */,
@@ -314,6 +317,7 @@
 				BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */,
 				14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */,
 				0C618D4A0ADA204DE95CDFE1 /* GPUReader.swift in Sources */,
+				A6B72B0D339196B5E190C0D7 /* HealthStatus.swift in Sources */,
 				3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */,
 				83CF944330412764A4436855 /* IOReader.swift in Sources */,
 				461517966B348F2B8100C02F /* MemoryReader.swift in Sources */,

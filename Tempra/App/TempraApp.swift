@@ -67,18 +67,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// Menu bar item: icon plus the user's chosen live value.
+/// Menu bar item: icon plus the user's chosen live value, tinted orange or red when that
+/// statistic is in Warning or Critical.
 struct MenuBarLabel: View {
     @AppStorage(SettingsKey.menuBarDisplay) private var display = MenuBarDisplay.cpu.rawValue
     private let monitor = SystemMonitor.shared
 
     var body: some View {
         let mode = MenuBarDisplay(rawValue: display) ?? .cpu
-        HStack(spacing: 4) {
-            Image(systemName: monitor.hasSample ? mode.symbol(for: monitor.latest) : MenuBarDisplay.iconOnly.symbol(for: monitor.latest))
-            if monitor.hasSample, let text = mode.text(for: monitor.latest) {
-                Text(text).monospacedDigit()
+        let symbol = monitor.hasSample ? mode.symbol(for: monitor.latest) : MenuBarDisplay.iconOnly.symbol(for: monitor.latest)
+        let text = monitor.hasSample ? mode.text(for: monitor.latest) : nil
+        let state = monitor.hasSample ? mode.healthMetric.map(monitor.health) ?? .normal : .normal
+
+        if let color = state.nsColor {
+            // Menu bar labels are drawn as monochrome templates, so colour needs a pre-rendered image.
+            Image(nsImage: Self.tintedImage(symbol: symbol, text: text, color: color))
+        } else {
+            HStack(spacing: 4) {
+                Image(systemName: symbol)
+                if let text { Text(text).monospacedDigit() }
             }
         }
+    }
+
+    static func tintedImage(symbol: String, text: String?, color: NSColor) -> NSImage {
+        let fontSize = NSFont.menuBarFont(ofSize: 0).pointSize
+        let config = NSImage.SymbolConfiguration(pointSize: fontSize, weight: .regular)
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+        let icon = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        let label = text.map {
+            NSAttributedString(string: $0, attributes: [
+                .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .regular),
+                .foregroundColor: color,
+            ])
+        }
+
+        let height: CGFloat = 18, spacing: CGFloat = 4
+        let iconSize = icon?.size ?? .zero
+        let labelSize = label?.size() ?? .zero
+        let width = ceil(iconSize.width + (label == nil ? 0 : spacing + labelSize.width))
+        let image = NSImage(size: NSSize(width: max(width, 1), height: height), flipped: false) { _ in
+            icon?.draw(in: NSRect(x: 0, y: (height - iconSize.height) / 2, width: iconSize.width, height: iconSize.height))
+            label?.draw(at: NSPoint(x: iconSize.width + spacing, y: (height - labelSize.height) / 2))
+            return true
+        }
+        image.isTemplate = false
+        return image
     }
 }
