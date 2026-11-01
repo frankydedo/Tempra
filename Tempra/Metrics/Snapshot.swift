@@ -28,6 +28,8 @@ struct Snapshot: Sendable {
     var memCached: UInt64 = 0
     var swapUsed: UInt64 = 0
     var swapTotal: UInt64 = 0
+    /// Bytes per second being written to swap right now.
+    var swapOutRate: Double = 0
     /// 0...1, derived from kern.memorystatus_level (same idea as Activity Monitor's pressure graph).
     var memPressure: Double = 0
     var memPressureLevel: MemoryPressureLevel = .normal

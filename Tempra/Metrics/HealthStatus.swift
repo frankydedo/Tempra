@@ -64,9 +64,14 @@ enum HealthRules {
 
     static let healthWarning = 0.80
 
-    /// Memory is Warning when macOS's warning level held for this share of the last five minutes.
-    static let memoryWarningWindow: TimeInterval = 5 * 60
-    static let memoryWarningShare = 0.8
+    /// Memory pressure (100% − macOS's available-memory level, the value Activity Monitor plots)
+    /// and swap-out rate thresholds, held for `memoryShare` of the last `memoryWindow`.
+    static let memoryWarningPressure = 0.70
+    static let memoryCriticalPressure = 0.85
+    static let swapWarningRate = 1_000_000.0      // 1 MB/s written to swap
+    static let swapCriticalRate = 20_000_000.0    // 20 MB/s
+    static let memoryWindow: TimeInterval = 60
+    static let memoryShare = 0.8
 
     /// A metric returns to a calmer state only after it has stayed there this long.
     static let recoveryDelay: TimeInterval = 120
@@ -83,11 +88,15 @@ extension Snapshot {
             guard let gpu else { return .normal }
             return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu)
         case .memory:
-            // macOS raises its "warning" level as a hint for apps to drop caches, often for a few
-            // seconds at a time, while Activity Monitor's graph stays green. Only a sustained warning
-            // means real pressure; critical is shown at once.
-            if memPressureLevel == .critical { return .critical }
-            return Self.sustainedMemoryWarning(live) ? .warning : .normal
+            // Follows what Activity Monitor's colours mean: little memory left (its graph is the same
+            // pressure percentage) or active swapping. macOS's "warning" level is not used: it's a hint
+            // for apps to drop caches and can stay raised with half the memory free.
+            if memPressureLevel == .critical
+                || Self.sustained(live[.memPressure], above: HealthRules.memoryCriticalPressure)
+                || Self.sustained(live[.swapOut], above: HealthRules.swapCriticalRate) { return .critical }
+            if Self.sustained(live[.memPressure], above: HealthRules.memoryWarningPressure)
+                || Self.sustained(live[.swapOut], above: HealthRules.swapWarningRate) { return .warning }
+            return .normal
         case .thermal:
             switch thermalState {
             case .nominal, .fair: return .normal
@@ -133,8 +142,9 @@ extension Snapshot {
         case .gpu:
             return String(format: "GPU %.0f%%, 1-min avg %.0f%%", (gpu ?? 0) * 100, (Self.recentAverage(live[.gpu]) ?? gpu ?? 0) * 100)
         case .memory:
-            return String(format: "pressure %.0f%% (%@), used %@, swap %@", memPressure * 100, memPressureLevel.label,
-                          Format.bytes(memUsed), Format.bytes(swapUsed))
+            return String(format: "pressure %.0f%% (macOS level %@), used %@, swap %@, swapping out %@/s",
+                          memPressure * 100, memPressureLevel.label, Format.bytes(memUsed), Format.bytes(swapUsed),
+                          Format.bytes(swapOutRate))
         case .thermal:
             return String(format: "thermal state %@, SoC %.0f°C, hotspot %.0f°C", thermalStateText, socTemp ?? 0, socTempMax ?? 0)
         case .battery, .batteryHealth, .power:
@@ -164,15 +174,12 @@ extension Snapshot {
             && powerWindow.allSatisfy { $0.value < HealthRules.adapterDischargeWatts }
     }
 
-    /// True when macOS reported its memory "warning" level (or worse) for most of the last
-    /// `memoryWarningWindow`, and the readings actually cover that window.
-    private static func sustainedMemoryWarning(_ live: [Metric: [ChartPoint]]) -> Bool {
-        guard let levels = live[.memLevel], let now = levels.last?.date else { return false }
-        let start = now.addingTimeInterval(-HealthRules.memoryWarningWindow)
-        let window = levels.filter { $0.date >= start }
-        guard let first = window.first?.date, first.timeIntervalSince(start) < 15 else { return false }
-        let elevated = window.filter { $0.value >= Double(MemoryPressureLevel.warning.rawValue) }.count
-        return Double(elevated) / Double(window.count) >= HealthRules.memoryWarningShare
+    /// True when `points` stayed above `threshold` for most of the last `memoryWindow`.
+    private static func sustained(_ points: [ChartPoint]?, above threshold: Double) -> Bool {
+        guard let points, let now = points.last?.date else { return false }
+        let window = points.filter { $0.date >= now.addingTimeInterval(-HealthRules.memoryWindow) }
+        guard window.count >= 3 else { return false }
+        return Double(window.filter { $0.value > threshold }.count) / Double(window.count) >= HealthRules.memoryShare
     }
 
     private static func loadState(_ value: Double) -> HealthState {

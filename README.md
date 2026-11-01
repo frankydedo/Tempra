@@ -57,7 +57,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 
 | Metric | Source | Warning | Critical |
 |---|---|---|---|
-| Memory | macOS memory pressure level | Warning for most of the last 5 minutes | Critical |
+| Memory | Available memory (the pressure Activity Monitor plots) and swap activity | Pressure above 70% or swapping out over 1 MB/s, for a minute | Pressure above 85%, swapping over 20 MB/s, or macOS critical |
 | Temperature | macOS thermal state | Serious (throttling) | Critical |
 | Battery level | macOS low-battery warning | Early (below ~22%) | Final (~10 min left) |
 | Battery health | macOS battery condition, Apple's 80% threshold | Capacity below 80% | Service recommended |

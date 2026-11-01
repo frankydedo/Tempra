@@ -7,6 +7,7 @@ actor Sampler {
     private let thermal = ThermalReader()
     private let io = IOReader()
     private let fan = FanReader()
+    private var lastSwapOut: (bytes: UInt64, date: Date)?
 
     func sample() -> Snapshot {
         var s = Snapshot()
@@ -38,6 +39,10 @@ actor Sampler {
             s.swapTotal = m.swapTotal
             s.memPressure = m.pressure
             s.memPressureLevel = m.pressureLevel
+            if let last = lastSwapOut, m.swappedOut >= last.bytes {
+                s.swapOutRate = Double(m.swappedOut - last.bytes) / max(s.date.timeIntervalSince(last.date), 0.001)
+            }
+            lastSwapOut = (m.swappedOut, s.date)
         }
 
         let t = thermal.read()

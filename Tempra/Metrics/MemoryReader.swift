@@ -12,6 +12,8 @@ enum MemoryReader {
         var cached: UInt64
         var swapUsed: UInt64
         var swapTotal: UInt64
+        /// Cumulative bytes written to swap since boot.
+        var swappedOut: UInt64
         var pressure: Double
         var pressureLevel: MemoryPressureLevel
     }
@@ -50,6 +52,7 @@ enum MemoryReader {
                        cached: cached,
                        swapUsed: swap.xsu_used,
                        swapTotal: swap.xsu_total,
+                       swappedOut: UInt64(stats.swapouts) * page,
                        pressure: Double(100 - freeLevel) / 100,
                        pressureLevel: level)
     }

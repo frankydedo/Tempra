@@ -7,9 +7,8 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     case gpu
     case memUsed = "mem_used"
     case memPressure = "mem_pressure"
-    /// macOS's memory pressure level: 1 normal, 2 warning, 4 critical.
-    case memLevel = "mem_level"
     case swap
+    case swapOut = "swap_out"
     case socTemp = "soc_temp"
     case socTempMax = "soc_temp_max"
     case batteryTemp = "batt_temp"
@@ -33,8 +32,8 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .gpu: "GPU"
         case .memUsed: "Memory Used"
         case .memPressure: "Memory Pressure"
-        case .memLevel: "Memory Pressure Level"
         case .swap: "Swap"
+        case .swapOut: "Swapping Out"
         case .socTemp: "SoC Temperature"
         case .socTempMax: "SoC Hotspot"
         case .batteryTemp: "Battery Temperature"
@@ -54,13 +53,13 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
 
     var unit: MetricUnit {
         switch self {
-        case .cpu, .gpu, .memUsed, .memPressure, .memLevel, .swap: .fraction
+        case .cpu, .gpu, .memUsed, .memPressure, .swap: .fraction
         case .socTemp, .socTempMax, .batteryTemp: .celsius
         case .fanRPM: .rpm
         case .batteryPercent: .percent
         case .batteryPower, .systemPower, .adapterWatts: .watts
         case .onAC, .charging: .fraction
-        case .netIn, .netOut, .diskRead, .diskWrite: .bytesPerSecond
+        case .netIn, .netOut, .diskRead, .diskWrite, .swapOut: .bytesPerSecond
         }
     }
 
@@ -68,7 +67,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cpu: .blue
         case .gpu: .indigo
-        case .memUsed, .memPressure, .memLevel, .swap: .purple
+        case .memUsed, .memPressure, .swap, .swapOut: .purple
         case .socTemp, .socTempMax, .batteryTemp: .orange
         case .fanRPM: .cyan
         case .batteryPercent: .green
@@ -94,8 +93,8 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .gpu: s.gpu
         case .memUsed: s.memUsedFraction
         case .memPressure: s.memPressure
-        case .memLevel: Double(s.memPressureLevel.rawValue)
         case .swap: s.swapTotal > 0 ? Double(s.swapUsed) / Double(s.swapTotal) : 0
+        case .swapOut: s.swapOutRate
         case .socTemp: s.socTemp
         case .socTempMax: s.socTempMax
         case .batteryTemp: s.batteryTemp
