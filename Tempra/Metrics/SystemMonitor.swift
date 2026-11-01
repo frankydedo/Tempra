@@ -115,6 +115,9 @@ final class SystemMonitor {
         if snapshot.date.timeIntervalSince(lastRollUp) >= 60 {
             lastRollUp = snapshot.date
             await store.rollUpAndPrune(now: snapshot.date)
+            if let battery = snapshot.battery {
+                await publishBatteryState(battery)
+            }
         }
         if let battery = snapshot.battery, snapshot.date.timeIntervalSince(lastHealthRecord) >= 3600 {
             lastHealthRecord = snapshot.date
@@ -147,6 +150,18 @@ final class SystemMonitor {
             }
             live[metric] = points
         }
+    }
+
+    /// Tells the forecaster the battery's current state and energy, which it needs to turn a
+    /// power forecast into a battery level forecast.
+    private func publishBatteryState(_ b: BatteryInfo) async {
+        let state: [String: Any] = [
+            "percent": b.percent, "on_ac": b.onAC, "charging": b.isCharging,
+            "nominal_mah": b.nominalCapacity, "voltage": b.voltage,
+        ]
+        guard b.nominalCapacity > 0, b.voltage > 0,
+              let data = try? JSONSerialization.data(withJSONObject: state) else { return }
+        await store.setMeta("battery_state", String(decoding: data, as: UTF8.self))
     }
 
     private func refreshProcesses() async {

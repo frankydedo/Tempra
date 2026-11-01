@@ -74,13 +74,43 @@ struct HistoryChart: View {
     var height: CGFloat = 180
 
     @State private var points: [ChartPoint] = []
+    @State private var pluggedIn: [PluggedSpan] = []
     @State private var hover: Date?
     private let monitor = SystemMonitor.shared
 
+    /// A stretch of time spent on the power adapter, shaded on the battery chart.
+    struct PluggedSpan: Identifiable {
+        var id: Date { start }
+        let start: Date
+        var end: Date
+    }
+
     var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            chart
+            if !pluggedIn.isEmpty {
+                Label {
+                    Text("On power adapter")
+                } icon: {
+                    RoundedRectangle(cornerRadius: 2).fill(Self.pluggedColor.opacity(0.35)).frame(width: 14, height: 9)
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private static let pluggedColor = Color.yellow
+
+    private var chart: some View {
         let forecastPoints = visibleForecast
         let domain = metric.yDomain ?? autoDomain(forecastPoints)
-        Chart {
+        return Chart {
+            ForEach(pluggedIn) { span in
+                RectangleMark(xStart: .value("From", span.start), xEnd: .value("To", span.end),
+                              yStart: .value("Bottom", domain.lowerBound), yEnd: .value("Top", domain.upperBound))
+                    .foregroundStyle(Self.pluggedColor.opacity(0.16))
+            }
             ForEach(points) { point in
                 // Fill down to the axis minimum (not zero) so the area never spills below the plot.
                 AreaMark(x: .value("Time", point.date), yStart: .value("Base", domain.lowerBound),
@@ -168,7 +198,26 @@ struct HistoryChart: View {
 
     private func load() async {
         let to = Date()
-        points = await monitor.store.series(metric, from: to.addingTimeInterval(-range.seconds), to: to, bucket: range.bucket)
+        let from = to.addingTimeInterval(-range.seconds)
+        points = await monitor.store.series(metric, from: from, to: to, bucket: range.bucket)
+        if metric == .batteryPercent {
+            let adapter = await monitor.store.series(.onAC, from: from, to: to, bucket: range.bucket)
+            pluggedIn = Self.spans(adapter, bucket: range.bucket)
+        }
+    }
+
+    /// Merges buckets where the Mac was mostly on the adapter into continuous spans.
+    private static func spans(_ adapter: [ChartPoint], bucket: TimeInterval) -> [PluggedSpan] {
+        var spans: [PluggedSpan] = []
+        for point in adapter where point.value >= 0.5 {
+            let end = point.date.addingTimeInterval(bucket)
+            if let last = spans.last, point.date.timeIntervalSince(last.end) <= bucket * 1.5 {
+                spans[spans.count - 1].end = end
+            } else {
+                spans.append(PluggedSpan(start: point.date, end: end))
+            }
+        }
+        return spans
     }
 
     private func label(at date: Date) -> String? {

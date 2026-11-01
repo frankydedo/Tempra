@@ -189,6 +189,14 @@ actor HistoryStore {
         return value
     }
 
+    func setMeta(_ key: String, _ value: String) {
+        withStatement("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)") { stmt in
+            sqlite3_bind_text(stmt, 1, key, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(stmt, 2, value, -1, SQLITE_TRANSIENT)
+            sqlite3_step(stmt)
+        }
+    }
+
     /// Size of the database files on disk, in bytes.
     func diskSize() -> Int64 {
         ["", "-wal", "-shm"].reduce(0) { total, suffix in

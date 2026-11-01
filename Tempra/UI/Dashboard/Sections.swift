@@ -198,6 +198,10 @@ struct BatterySection: View {
                     Card(title: "Time Remaining", systemImage: "clock") {
                         InfoRow(label: "macOS estimate", value: macOSEstimate(b))
                         InfoRow(label: "Timestral forecast", value: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? "—")
+                        if let unplugged = forecaster.forecasts[ForecastKey.battery]?.unpluggedText,
+                           forecaster.forecasts[ForecastKey.battery]?.summary?.kind == "time_to_full" {
+                            InfoRow(label: "If unplugged now", value: unplugged)
+                        }
                     }
                     Card(title: "Details", systemImage: "info.circle") {
                         InfoRow(label: "Cycle count", value: "\(b.cycleCount)")

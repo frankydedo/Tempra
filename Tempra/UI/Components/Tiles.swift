@@ -163,16 +163,34 @@ extension Forecast {
     /// Human readable battery prediction, e.g. "Empty in ~2h 10m (1h 50m–2h 40m)".
     var batteryText: String? {
         guard let s = summary else { return nil }
-        let verb = s.kind == "time_to_full" ? "Full" : "Empty"
-        guard let seconds = s.seconds else {
-            if let horizon = s.horizon { return "\(verb) in more than \(Format.duration(seconds: horizon))" }
-            return nil
+        switch s.kind {
+        case "held":
+            let level = s.percent.map { String(format: "Held at %.0f%%", $0) } ?? "On adapter"
+            guard let unplugged = s.ifUnplugged.flatMap({ Self.etaText($0, horizon: s.horizon) }) else { return level }
+            return "\(level) · \(unplugged) on battery"
+        case "time_to_full":
+            return Self.etaText(s.eta, horizon: s.horizon).map { "Full in \($0)" }
+        default:
+            return Self.etaText(s.eta, horizon: s.horizon).map { "Empty in \($0)" }
         }
-        var text = "\(verb) in ~\(Format.duration(seconds: seconds))"
-        if let low = s.low, let high = s.high, high > low {
+    }
+
+    /// Battery life if unplugged now, shown while charging or on the adapter.
+    var unpluggedText: String? {
+        guard let s = summary, s.kind != "time_to_empty", let eta = s.ifUnplugged else { return nil }
+        return Self.etaText(eta, horizon: s.horizon).map { "\($0) if unplugged now" }
+    }
+
+    /// "~2h 10m (1h 50m–2h 40m)", "~2h 10m (at least 1h 50m)" or "more than 12h".
+    private static func etaText(_ eta: ETA, horizon: Double?) -> String? {
+        guard let seconds = eta.seconds else {
+            return horizon.map { "more than \(Format.duration(seconds: $0))" }
+        }
+        var text = "~\(Format.duration(seconds: seconds))"
+        if let low = eta.low, let high = eta.high, high > low {
             text += " (\(Format.duration(seconds: low))–\(Format.duration(seconds: high)))"
-        } else if let low = s.low {
-            text += " (from \(Format.duration(seconds: low)))"
+        } else if let low = eta.low, low < seconds {
+            text += " (at least \(Format.duration(seconds: low)))"
         }
         return text
     }

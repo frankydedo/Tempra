@@ -32,7 +32,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 🧭 **Lives in the menu bar** | An icon plus one live value of your choice (CPU, GPU, memory pressure, temperature, battery or power). The icon follows the statistic you show. |
 | 🪟 **Glanceable summary** | Click the icon for a compact panel with the essentials, sparklines and the latest forecasts. |
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
-| 🔮 **Forecasts with Timestral** | Probabilistic forecasts (10th–90th percentile bands): time to empty or full, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
+| 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
 | 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes a few milliseconds per forecast on CPU, once a minute. |
 | 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
@@ -70,6 +70,11 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
     <td width="50%"><img src="docs/screenshots/memory.png" alt="Memory section"><br><sub><b>Memory</b>: pressure, breakdown and swap</sub></td>
   </tr>
 </table>
+
+<p align="center">
+  <img src="docs/screenshots/forecasts.png" width="70%" alt="Forecasts section"><br>
+  <sub><b>Forecasts</b>: every Timestral forecast with its uncertainty band and what it was conditioned on</sub>
+</p>
 
 ## Requirements
 
@@ -125,12 +130,29 @@ forecaster/setup.sh ~/Library/Application\ Support/Tempra/forecaster
 This creates a private virtual environment with PyTorch and Timestral, on a native arm64 Python even when
 `uv` itself runs under Rosetta. The model weights (21 MB for the 5M model) download on first run.
 
-| Forecast | Resolution | Context | Horizon | Shown as |
-|---|---|---|---|---|
-| Battery level | 5 min | 7 days | 12 h | "Empty in ~2h 10m (1h 50m–2h 40m)" or time to full |
-| CPU, GPU, memory pressure | 1 min | 3 days | 1 h | Average and peak for the next hour |
-| SoC temperature, system power | 1 min | 3 days | 1 h | Forecast band on the history charts |
-| Battery health | 1 day | all | 180 days | Projected capacity in 6 months, days until 80% |
+### How the forecasts work
+
+Your Mac's vitals are tightly linked: load drives power and temperature, power and the adapter drive the
+battery. Tempra's forecasts use those links instead of predicting each metric on its own.
+
+| Block | Steps · context · horizon | Targets | Conditioned on |
+|---|---|---|---|
+| **System** | 1 min · 3 days · 1 h | CPU, GPU, memory pressure, SoC temperature and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
+| **Battery** | 5 min · 7 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
+| **Battery health** | 1 day · all · 180 days | Maximum capacity | — |
+
+**Battery level** comes from a hybrid model: Timestral forecasts the power the Mac will draw, and Tempra
+converts it into battery percentage using the battery's actual energy (mAh × V). This stays physically
+consistent from day one, even before your history contains enough discharges for a purely statistical model.
+Depending on the state, Tempra shows:
+
+| State | Shown as |
+|---|---|
+| On battery | "Empty in ~2h 10m (1h 50m–2h 40m)" |
+| Charging | "Full in ~45m", plus how long it would last if you unplugged now |
+| On adapter, not charging (e.g. held at the charge limit) | "Held at 80% · ~6h 10m on battery" |
+
+The battery chart shades the periods spent on the power adapter.
 
 Forecasts appear after about an hour of history (two hours for battery, two weeks of daily samples for
 battery health) and refresh every minute. You can switch between **Timestral 5M** and **28M** in Settings.

@@ -3,6 +3,12 @@ import Observation
 
 /// A probabilistic forecast produced by Timestral (see `forecaster/worker.py`).
 struct Forecast: Decodable, Sendable {
+    struct ETA: Decodable, Sendable {
+        let seconds: Double?
+        let low: Double?
+        let high: Double?
+    }
+
     struct Summary: Decodable, Sendable {
         let kind: String
         let seconds: Double?
@@ -11,6 +17,11 @@ struct Forecast: Decodable, Sendable {
         let horizon: Double?
         let value: Double?
         let daysTo80: Int?
+        let percent: Double?
+        /// Battery life if unplugged now (sent while on the adapter).
+        let ifUnplugged: ETA?
+
+        var eta: ETA { ETA(seconds: seconds, low: low, high: high) }
     }
 
     let metric: String
@@ -25,6 +36,8 @@ struct Forecast: Decodable, Sendable {
     let contextPoints: Int
     let model: String?
     let summary: Summary?
+    /// What the forecast was conditioned on, e.g. other metrics forecast jointly.
+    let covariates: [String]?
 
     var generatedDate: Date { Date(timeIntervalSince1970: generatedAt) }
     var endDate: Date { Date(timeIntervalSince1970: start + step * Double(median.count - 1)) }

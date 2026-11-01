@@ -190,6 +190,10 @@ struct ForecastCard: View {
             HistoryChart(metric: metric, range: forecast.step >= 300 ? .h24 : .h6, forecast: forecast, height: 160)
             Text("Generated \(forecast.generatedDate.formatted(.relative(presentation: .named))) from \(forecast.contextPoints) points")
                 .font(.caption2).foregroundStyle(.secondary)
+            if let covariates = forecast.covariates, !covariates.isEmpty {
+                Text("Conditioned on: " + covariates.joined(separator: " · "))
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
         }
     }
 }
