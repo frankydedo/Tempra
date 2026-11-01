@@ -54,6 +54,16 @@ final class CPUReader {
         return (loads[0], loads[1], loads[2])
     }
 
+    /// e.g. "Apple M4"
+    static let chipName: String = {
+        var size = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        var buffer = [CChar](repeating: 0, count: max(size, 1))
+        sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
+        let name = String(cString: buffer)
+        return name.isEmpty ? "Mac" : name
+    }()
+
     static func sysctlInt(_ name: String) -> Int? {
         var value: Int32 = 0
         var size = MemoryLayout<Int32>.size

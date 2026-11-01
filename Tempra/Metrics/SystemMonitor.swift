@@ -91,6 +91,7 @@ final class SystemMonitor {
     func start() {
         loop?.cancel()
         loop = Task { [weak self] in
+            await self?.seedLive()
             // The first CPU/IO read only primes the delta counters.
             _ = await self?.sampler.sample()
             try? await Task.sleep(for: .seconds(1))
@@ -121,6 +122,17 @@ final class SystemMonitor {
         }
         if processesVisible {
             await refreshProcesses()
+        }
+    }
+
+    /// Fills the sparklines from recorded history so they aren't empty right after launch.
+    private func seedLive() async {
+        guard live.isEmpty else { return }
+        let now = Date()
+        for metric in Metric.allCases {
+            let points = await store.series(metric, from: now.addingTimeInterval(-Self.liveWindow), to: now,
+                                            bucket: SettingsKey.defaultSampleInterval)
+            if !points.isEmpty { live[metric] = points }
         }
     }
 

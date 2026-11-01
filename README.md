@@ -34,7 +34,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
 | 🔮 **Forecasts with Timestral** | Probabilistic forecasts (10th–90th percentile bands): time to empty or full, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
-| 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes about 13 ms per forecast on CPU, every 5 minutes. |
+| 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes a few milliseconds per forecast on CPU, once a minute. |
 | 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
 | 🔒 **Private** | No accounts, no telemetry, no network calls except the one-time model download. |
 
@@ -133,7 +133,7 @@ This creates a private virtual environment with PyTorch and Timestral, on a nati
 | Battery health | 1 day | all | 180 days | Projected capacity in 6 months, days until 80% |
 
 Forecasts appear after about an hour of history (two hours for battery, two weeks of daily samples for
-battery health) and refresh every 5 minutes. You can switch between **Timestral 5M** and **28M** in Settings.
+battery health) and refresh every minute. You can switch between **Timestral 5M** and **28M** in Settings.
 
 ## Architecture
 

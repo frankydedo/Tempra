@@ -121,7 +121,7 @@ private struct ForecastSettings: View {
                     LabeledContent("Last forecast", value: last.formatted(date: .omitted, time: .shortened))
                 }
             } footer: {
-                Text("Timestral runs locally in a background Python process and refreshes forecasts every 5 minutes. The model is downloaded from Hugging Face on first use.")
+                Text("Timestral runs locally in a background Python process and refreshes forecasts every minute. The model is downloaded from Hugging Face on first use.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 

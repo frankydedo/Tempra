@@ -79,9 +79,12 @@ struct HistoryChart: View {
 
     var body: some View {
         let forecastPoints = visibleForecast
+        let domain = metric.yDomain ?? autoDomain(forecastPoints)
         Chart {
             ForEach(points) { point in
-                AreaMark(x: .value("Time", point.date), y: .value(metric.title, point.value), series: .value("Series", "history"))
+                // Fill down to the axis minimum (not zero) so the area never spills below the plot.
+                AreaMark(x: .value("Time", point.date), yStart: .value("Base", domain.lowerBound),
+                         yEnd: .value(metric.title, point.value), series: .value("Series", "history"))
                     .foregroundStyle(LinearGradient(colors: [metric.color.opacity(0.25), metric.color.opacity(0.02)], startPoint: .top, endPoint: .bottom))
                     .interpolationMethod(.monotone)
                 LineMark(x: .value("Time", point.date), y: .value(metric.title, point.value), series: .value("Series", "history"))
@@ -98,11 +101,11 @@ struct HistoryChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                     .interpolationMethod(.monotone)
             }
-            if !forecastPoints.isEmpty {
-                RuleMark(x: .value("Now", Date()))
+            if let now = forecastPoints.first?.date {
+                RuleMark(x: .value("Now", now))
                     .foregroundStyle(.secondary.opacity(0.5))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
-                    .annotation(position: .top, alignment: .leading) {
+                    .annotation(position: .trailing, alignment: .top, spacing: 4) {
                         Text("Forecast").font(.caption2).foregroundStyle(.secondary)
                     }
             }
@@ -120,7 +123,7 @@ struct HistoryChart: View {
                     }
             }
         }
-        .chartYScale(domain: metric.yDomain ?? autoDomain(forecastPoints))
+        .chartYScale(domain: domain)
         .chartYAxis {
             AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
                 AxisGridLine().foregroundStyle(.quaternary)
@@ -136,7 +139,6 @@ struct HistoryChart: View {
                     .font(.caption2)
             }
         }
-        .chartPlotStyle { $0.clipped() }
         .chartXSelection(value: $hover)
         .frame(height: height)
         .overlay {
@@ -152,10 +154,16 @@ struct HistoryChart: View {
         }
     }
 
+    /// Forecast points after the latest real sample, starting from that sample so the dashed
+    /// median and the band fan out of the history line instead of overlapping it. Forecasts are
+    /// computed periodically, so their first steps may already be in the past.
     private var visibleForecast: [Forecast.Point] {
-        guard let forecast, range <= .h24, forecast.endDate > Date() else { return [] }
+        guard let forecast, range <= .h24, let last = points.last else { return [] }
         // Show at most half of the visible window into the future so history stays readable.
-        return forecast.points(horizon: max(range.seconds * 0.5, forecast.step * 6))
+        let end = last.date.addingTimeInterval(max(range.seconds * 0.5, forecast.step * 6))
+        let future = forecast.points().filter { $0.date > last.date && $0.date <= end }
+        guard !future.isEmpty else { return [] }
+        return [Forecast.Point(date: last.date, median: last.value, low: last.value, high: last.value)] + future
     }
 
     private func load() async {

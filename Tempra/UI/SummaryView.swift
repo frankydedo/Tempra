@@ -60,7 +60,7 @@ struct SummaryView: View {
                 .foregroundStyle(.tint)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Tempra").font(.headline)
-                Text(Host.current().localizedName ?? "This Mac").font(.caption).foregroundStyle(.secondary)
+                Text("\(CPUReader.chipName) · \(Format.bytes(MemoryReader.totalMemory))").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             Button {

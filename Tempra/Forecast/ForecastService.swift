@@ -166,7 +166,7 @@ final class ForecastService {
             Self.directory.appendingPathComponent("worker.py").path,
             "--db", HistoryStore.databaseURL.path,
             "--model", model,
-            "--interval", "300",
+            "--interval", "60",
             "--parent-pid", String(ProcessInfo.processInfo.processIdentifier),
         ]
         var env = ProcessInfo.processInfo.environment

@@ -15,7 +15,7 @@ enum DebugSnapshots {
             var windows: [(String, NSWindow)] = []
             windows.append(("summary", window(SummaryView(), width: 360)))
             windows.append(("dashboard", window(DashboardView(), width: 1080, height: 720)))
-            let range = TimeRange.m15
+            let range = UserDefaults.standard.string(forKey: "TempraSnapshotRange").flatMap(TimeRange.init(rawValue:)) ?? .m15
             let sections: [(String, AnyView)] = [
                 ("overview", AnyView(OverviewSection(range: range))),
                 ("cpu", AnyView(CPUSection(range: range))),

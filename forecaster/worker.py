@@ -5,7 +5,7 @@ Reads Tempra's history database, forecasts the next hours with Mistral's Timestr
 where the app picks them up.
 
 Run once:      python worker.py --db <history.sqlite> --once
-Run as daemon: python worker.py --db <history.sqlite> --interval 300 --parent-pid <pid>
+Run as daemon: python worker.py --db <history.sqlite> --interval 60 --parent-pid <pid>
 """
 
 from __future__ import annotations
@@ -208,7 +208,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", required=True)
     parser.add_argument("--model", default="mistralai/Timestral-5M")
-    parser.add_argument("--interval", type=float, default=300)
+    parser.add_argument("--interval", type=float, default=60)
     parser.add_argument("--parent-pid", type=int, default=0)
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
