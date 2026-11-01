@@ -1,0 +1,42 @@
+name: Tempra
+options:
+  bundleIdPrefix: com.fdedominicis
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Tempra:
+    type: application
+    platform: macOS
+    sources:
+      - path: Tempra
+      - path: forecaster/worker.py
+        buildPhase: resources
+      - path: forecaster/pyproject.toml
+        buildPhase: resources
+      - path: forecaster/setup.sh
+        buildPhase: resources
+    info:
+      path: Tempra/Support/Info.plist
+      properties:
+        CFBundleDisplayName: Tempra
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        NSHumanReadableCopyright: "© 2026 Francesco De Dominicis"
+    entitlements:
+      path: Tempra/Support/Tempra.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fdedominicis.tempra
+        SWIFT_OBJC_BRIDGING_HEADER: Tempra/Support/Tempra-Bridging-Header.h
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: false
+        GENERATE_INFOPLIST_FILE: false

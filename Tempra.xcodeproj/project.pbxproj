@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757F9FE28A4A37A8126C3099 /* ForecastService.swift */; };
+		1498765876B423226746F435 /* TempraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */; };
+		1C76B3DE579D8CE4F04CC0CC /* Charts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1922F1CDB94A0BCCBFC4522 /* Charts.swift */; };
+		2086BC8806DA54007E8DF682 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A13DC16A79768CC4246F4BC /* DashboardView.swift */; };
+		3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2AE23943FDA6134BAF50993 /* HistoryStore.swift */; };
+		3D9E5947C5B492F7E8A9E99E /* Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C522DCEF4FC994D66BF2DB /* Sections.swift */; };
+		461517966B348F2B8100C02F /* MemoryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */; };
+		519E6BFF0D8753053605ADCD /* worker.py in Resources */ = {isa = PBXBuildFile; fileRef = ABD72B5098790E988B517A5E /* worker.py */; };
+		6651CEFA21BF8FADF66CD4E6 /* ProcessReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */; };
+		6B4FCA02372E80A8266FBD38 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D153CC51BD62D140C2DBDB56 /* SummaryView.swift */; };
+		6DFD496F16A37F9A835708F7 /* CPUReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7320A3B02D3505C3DA36573 /* CPUReader.swift */; };
+		7E802EABD26A8DD582352657 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */; };
+		83CF944330412764A4436855 /* IOReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CEE481C0E5AACF68B87EB8 /* IOReader.swift */; };
+		8FDE4FD85A1D464C914FEE63 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7039293397FD5EE0BA08FA /* Settings.swift */; };
+		A7529E9F24CCF0A51569A385 /* setup.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3693C24303A6402F9EEDBD97 /* setup.sh */; };
+		B1184CC295ED3B41017FADD2 /* pyproject.toml in Resources */ = {isa = PBXBuildFile; fileRef = 4AD34EC1974E9A796CFD38B4 /* pyproject.toml */; };
+		B4092B3FF03E1E44884B073F /* BatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58817591800ADE36E48A22B /* BatteryReader.swift */; };
+		BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */; };
+		BD337F486A80698930039BA1 /* ThermalReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */; };
+		C707BBE378508D02A643C777 /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04052B909EA02355924185FB /* Snapshot.swift */; };
+		CCF81FFA5588F0503AC42E63 /* Tiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */; };
+		D4120F8177BC58AB42591163 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */; };
+		E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 726520B9486067D858AAE61A /* Metric.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		04052B909EA02355924185FB /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
+		0AE724A836D144EFBABEDB6D /* Tempra-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tempra-Bridging-Header.h"; sourceTree = "<group>"; };
+		1D3248522DAB166218CA2BA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSnapshots.swift; sourceTree = "<group>"; };
+		2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryReader.swift; sourceTree = "<group>"; };
+		3693C24303A6402F9EEDBD97 /* setup.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setup.sh; sourceTree = "<group>"; };
+		440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		4AD34EC1974E9A796CFD38B4 /* pyproject.toml */ = {isa = PBXFileReference; path = pyproject.toml; sourceTree = "<group>"; };
+		4D7039293397FD5EE0BA08FA /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		66E9DBD9AF44E304A717CC98 /* Tempra.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tempra.entitlements; sourceTree = "<group>"; };
+		67C522DCEF4FC994D66BF2DB /* Sections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sections.swift; sourceTree = "<group>"; };
+		6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempraApp.swift; sourceTree = "<group>"; };
+		726520B9486067D858AAE61A /* Metric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metric.swift; sourceTree = "<group>"; };
+		757F9FE28A4A37A8126C3099 /* ForecastService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastService.swift; sourceTree = "<group>"; };
+		77CEE481C0E5AACF68B87EB8 /* IOReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOReader.swift; sourceTree = "<group>"; };
+		8A13DC16A79768CC4246F4BC /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		ABD72B5098790E988B517A5E /* worker.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = worker.py; sourceTree = "<group>"; };
+		ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessReader.swift; sourceTree = "<group>"; };
+		AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tiles.swift; sourceTree = "<group>"; };
+		B1922F1CDB94A0BCCBFC4522 /* Charts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Charts.swift; sourceTree = "<group>"; };
+		B2AE23943FDA6134BAF50993 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
+		B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B7320A3B02D3505C3DA36573 /* CPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUReader.swift; sourceTree = "<group>"; };
+		D153CC51BD62D140C2DBDB56 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
+		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
+		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
+		EC7B4E5AC4373D6B284DB35C /* Tempra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3168A5914EB88E8549B7C1DB /* Metrics */ = {
+			isa = PBXGroup;
+			children = (
+				E58817591800ADE36E48A22B /* BatteryReader.swift */,
+				B7320A3B02D3505C3DA36573 /* CPUReader.swift */,
+				77CEE481C0E5AACF68B87EB8 /* IOReader.swift */,
+				2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */,
+				ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */,
+				04052B909EA02355924185FB /* Snapshot.swift */,
+				440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */,
+				E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */,
+			);
+			path = Metrics;
+			sourceTree = "<group>";
+		};
+		366F8CC10CA022A75C9DCE09 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				1D3248522DAB166218CA2BA9 /* Info.plist */,
+				0AE724A836D144EFBABEDB6D /* Tempra-Bridging-Header.h */,
+				66E9DBD9AF44E304A717CC98 /* Tempra.entitlements */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		3AED6878A934983638F43A88 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				B1922F1CDB94A0BCCBFC4522 /* Charts.swift */,
+				AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		3E86CAC18924A731E05AFF01 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B3B9EF034ED2D0B232FAC395 /* SettingsView.swift */,
+				D153CC51BD62D140C2DBDB56 /* SummaryView.swift */,
+				3AED6878A934983638F43A88 /* Components */,
+				DFBCF23808B41786E1CEC749 /* Dashboard */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		739E113DA5E43025D7E12F1C /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				B2AE23943FDA6134BAF50993 /* HistoryStore.swift */,
+				726520B9486067D858AAE61A /* Metric.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		82CDAA5B3308B768072DD261 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EC7B4E5AC4373D6B284DB35C /* Tempra.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A295677E832D7972D86D2713 /* forecaster */ = {
+			isa = PBXGroup;
+			children = (
+				4AD34EC1974E9A796CFD38B4 /* pyproject.toml */,
+				3693C24303A6402F9EEDBD97 /* setup.sh */,
+				ABD72B5098790E988B517A5E /* worker.py */,
+			);
+			path = forecaster;
+			sourceTree = "<group>";
+		};
+		BD638CEC57E0212E3DAFA385 /* Tempra */ = {
+			isa = PBXGroup;
+			children = (
+				D54D811C16A0DF2CE4107B34 /* App */,
+				EE2FC71AC55B180750635433 /* Forecast */,
+				3168A5914EB88E8549B7C1DB /* Metrics */,
+				739E113DA5E43025D7E12F1C /* Storage */,
+				366F8CC10CA022A75C9DCE09 /* Support */,
+				3E86CAC18924A731E05AFF01 /* UI */,
+			);
+			path = Tempra;
+			sourceTree = "<group>";
+		};
+		BF6F68885DF839C1AD1E561A = {
+			isa = PBXGroup;
+			children = (
+				A295677E832D7972D86D2713 /* forecaster */,
+				BD638CEC57E0212E3DAFA385 /* Tempra */,
+				82CDAA5B3308B768072DD261 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D54D811C16A0DF2CE4107B34 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */,
+				4D7039293397FD5EE0BA08FA /* Settings.swift */,
+				6E70EB1C21D0A3DBE91E2314 /* TempraApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		DFBCF23808B41786E1CEC749 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				8A13DC16A79768CC4246F4BC /* DashboardView.swift */,
+				67C522DCEF4FC994D66BF2DB /* Sections.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		EE2FC71AC55B180750635433 /* Forecast */ = {
+			isa = PBXGroup;
+			children = (
+				757F9FE28A4A37A8126C3099 /* ForecastService.swift */,
+			);
+			path = Forecast;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5F2749D49EE7E18B14672BBE /* Tempra */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C820D0DA400D4AB5092FDD61 /* Build configuration list for PBXNativeTarget "Tempra" */;
+			buildPhases = (
+				C7F22DB49088C4A8C2A21283 /* Sources */,
+				6C4618E2AA7FA052DA6FC657 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tempra;
+			packageProductDependencies = (
+			);
+			productName = Tempra;
+			productReference = EC7B4E5AC4373D6B284DB35C /* Tempra.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4F8172D9790053813F087974 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5F2749D49EE7E18B14672BBE = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = FB1662B01D4D5282E3B142E1 /* Build configuration list for PBXProject "Tempra" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = BF6F68885DF839C1AD1E561A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 82CDAA5B3308B768072DD261 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5F2749D49EE7E18B14672BBE /* Tempra */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6C4618E2AA7FA052DA6FC657 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1184CC295ED3B41017FADD2 /* pyproject.toml in Resources */,
+				A7529E9F24CCF0A51569A385 /* setup.sh in Resources */,
+				519E6BFF0D8753053605ADCD /* worker.py in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C7F22DB49088C4A8C2A21283 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B4092B3FF03E1E44884B073F /* BatteryReader.swift in Sources */,
+				6DFD496F16A37F9A835708F7 /* CPUReader.swift in Sources */,
+				1C76B3DE579D8CE4F04CC0CC /* Charts.swift in Sources */,
+				2086BC8806DA54007E8DF682 /* DashboardView.swift in Sources */,
+				BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */,
+				14301EF2270438D4E3BACB1A /* ForecastService.swift in Sources */,
+				3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */,
+				83CF944330412764A4436855 /* IOReader.swift in Sources */,
+				461517966B348F2B8100C02F /* MemoryReader.swift in Sources */,
+				E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */,
+				6651CEFA21BF8FADF66CD4E6 /* ProcessReader.swift in Sources */,
+				3D9E5947C5B492F7E8A9E99E /* Sections.swift in Sources */,
+				8FDE4FD85A1D464C914FEE63 /* Settings.swift in Sources */,
+				D4120F8177BC58AB42591163 /* SettingsView.swift in Sources */,
+				C707BBE378508D02A643C777 /* Snapshot.swift in Sources */,
+				6B4FCA02372E80A8266FBD38 /* SummaryView.swift in Sources */,
+				7E802EABD26A8DD582352657 /* SystemMonitor.swift in Sources */,
+				1498765876B423226746F435 /* TempraApp.swift in Sources */,
+				BD337F486A80698930039BA1 /* ThermalReader.swift in Sources */,
+				CCF81FFA5588F0503AC42E63 /* Tiles.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1500467E1BD27DDCD55DD996 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4C4CE1FB21A993D4E943D0A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Tempra/Support/Tempra.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tempra/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fdedominicis.tempra;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tempra/Support/Tempra-Bridging-Header.h";
+			};
+			name = Debug;
+		};
+		D66141DD6EC11582BD0A2A2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Tempra/Support/Tempra.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tempra/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fdedominicis.tempra;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tempra/Support/Tempra-Bridging-Header.h";
+			};
+			name = Release;
+		};
+		D8263F92926A032E735BE0A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C820D0DA400D4AB5092FDD61 /* Build configuration list for PBXNativeTarget "Tempra" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C4CE1FB21A993D4E943D0A7 /* Debug */,
+				D66141DD6EC11582BD0A2A2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FB1662B01D4D5282E3B142E1 /* Build configuration list for PBXProject "Tempra" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1500467E1BD27DDCD55DD996 /* Debug */,
+				D8263F92926A032E735BE0A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4F8172D9790053813F087974 /* Project object */;
+}

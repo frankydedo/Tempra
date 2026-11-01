@@ -1,0 +1,13 @@
+[project]
+name = "tempra-forecaster"
+version = "0.1.0"
+description = "Timestral-based forecasting worker for Tempra"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "timestral @ git+https://github.com/mistralai/timestral.git",
+    "numpy",
+    "torch>=2.4",
+]
+
+[tool.uv]
+package = false
