@@ -16,6 +16,10 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     case batteryPercent = "batt_pct"
     case batteryPower = "batt_power"
     case systemPower = "sys_power"
+    case socPower = "soc_power"
+    case cpuPower = "cpu_power"
+    case gpuPower = "gpu_power"
+    case adapterInput = "adapter_in"
     case onAC = "on_ac"
     case charging
     case adapterWatts = "adapter_w"
@@ -41,6 +45,10 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .batteryPercent: "Battery Level"
         case .batteryPower: "Battery Power"
         case .systemPower: "System Power"
+        case .socPower: "Chip Power"
+        case .cpuPower: "CPU & Rest of Chip"
+        case .gpuPower: "GPU Power"
+        case .adapterInput: "Adapter Input"
         case .onAC: "On Power Adapter"
         case .charging: "Charging"
         case .adapterWatts: "Adapter Rating"
@@ -57,7 +65,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .socTemp, .socTempMax, .batteryTemp: .celsius
         case .fanRPM: .rpm
         case .batteryPercent: .percent
-        case .batteryPower, .systemPower, .adapterWatts: .watts
+        case .batteryPower, .systemPower, .adapterWatts, .socPower, .cpuPower, .gpuPower, .adapterInput: .watts
         case .onAC, .charging: .fraction
         case .netIn, .netOut, .diskRead, .diskWrite, .swapOut: .bytesPerSecond
         }
@@ -71,7 +79,10 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .socTemp, .socTempMax, .batteryTemp: .orange
         case .fanRPM: .cyan
         case .batteryPercent: .green
-        case .batteryPower, .systemPower: .yellow
+        case .batteryPower, .systemPower, .adapterInput: .yellow
+        case .socPower: .orange
+        case .cpuPower: .blue
+        case .gpuPower: .indigo
         case .onAC, .charging, .adapterWatts: .gray
         case .netIn, .diskRead: .teal
         case .netOut, .diskWrite: .pink
@@ -102,6 +113,10 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .batteryPercent: s.battery?.percent
         case .batteryPower: s.battery?.batteryPower
         case .systemPower: s.battery?.systemPower
+        case .socPower: s.power.soc
+        case .cpuPower: s.power.cpuAndRest
+        case .gpuPower: s.power.gpu
+        case .adapterInput: s.battery?.onAC == true ? s.power.adapterInput : nil
         case .onAC: s.battery.map { $0.onAC ? 1 : 0 }
         case .charging: s.battery.map { $0.isCharging ? 1 : 0 }
         case .adapterWatts: s.battery.flatMap { $0.onAC ? $0.adapterWatts.map(Double.init) : nil }

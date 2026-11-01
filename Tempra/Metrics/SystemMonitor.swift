@@ -7,6 +7,7 @@ actor Sampler {
     private let thermal = ThermalReader()
     private let io = IOReader()
     private let fan = FanReader()
+    private let powerReader = PowerReader()
     private var lastSwapOut: (bytes: UInt64, date: Date)?
 
     func sample() -> Snapshot {
@@ -54,6 +55,9 @@ actor Sampler {
         s.fans = fan.read()
 
         s.battery = BatteryReader.read()
+        s.power = powerReader.read()
+        // The SMC's system power is real time; the battery gauge's only refreshes every 30–60 s.
+        if let system = s.power.system, system > 0 { s.battery?.systemPower = system }
 
         let i = io.read()
         s.netIn = i.netIn

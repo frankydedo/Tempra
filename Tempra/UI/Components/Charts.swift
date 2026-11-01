@@ -30,7 +30,14 @@ enum TimeRange: String, CaseIterable, Identifiable {
         }
     }
 
-    var refreshInterval: TimeInterval { self <= .h1 ? 5 : 60 }
+    /// How often a visible chart re-queries and redraws. Hidden charts don't redraw at all.
+    var refreshInterval: TimeInterval {
+        switch self {
+        case .m15: 5
+        case .h1: 10
+        default: 60
+        }
+    }
 
     static func <= (lhs: TimeRange, rhs: TimeRange) -> Bool { lhs.seconds <= rhs.seconds }
 }
@@ -73,25 +80,20 @@ struct HistoryChart: View {
     var forecast: Forecast?
     var height: CGFloat = 180
 
-    @State private var points: [ChartPoint] = []
-    @State private var powerSpans: [PowerSpan] = []
+    @State private var points: [ChartPoint]
+    @State private var powerSpans: [PowerSpan]
     @State private var hover: Date?
-    private let monitor = SystemMonitor.shared
+    private let visibility = UIVisibility.shared
 
-    /// A stretch of time on the power adapter, shaded on the battery chart.
-    struct PowerSpan: Identifiable {
-        enum Kind: CaseIterable {
-            case charging, notCharging
-
-            var label: String { self == .charging ? "Charging" : "On adapter, not charging" }
-            var color: Color { self == .charging ? .green : .yellow }
-            var opacity: Double { self == .charging ? 0.16 : 0.18 }
-        }
-
-        var id: Date { start }
-        let kind: Kind
-        let start: Date
-        var end: Date
+    init(metric: Metric, range: TimeRange, forecast: Forecast? = nil, height: CGFloat = 180) {
+        self.metric = metric
+        self.range = range
+        self.forecast = forecast
+        self.height = height
+        // Start from the shared cache so a freshly opened dashboard is never empty.
+        let cached = MainActor.assumeIsolated { ChartDataCache.shared.cached(.init(metric: metric, range: range)) }
+        _points = State(initialValue: cached?.points ?? [])
+        _powerSpans = State(initialValue: cached?.powerSpans ?? [])
     }
 
     var body: some View {
@@ -187,9 +189,13 @@ struct HistoryChart: View {
                 Text("Collecting data…").font(.callout).foregroundStyle(.secondary)
             }
         }
-        .task(id: "\(metric.rawValue)-\(range.rawValue)") {
+        .task(id: "\(metric.rawValue)-\(range.rawValue)-\(visibility.dashboard)") {
+            // Redraw only while the dashboard is on screen; ChartDataCache keeps data fresh otherwise.
+            guard visibility.dashboard else { return }
             while !Task.isCancelled {
-                await load()
+                let entry = await ChartDataCache.shared.load(.init(metric: metric, range: range))
+                points = entry.points
+                powerSpans = entry.powerSpans
                 try? await Task.sleep(for: .seconds(range.refreshInterval))
             }
         }
@@ -205,41 +211,6 @@ struct HistoryChart: View {
         let future = forecast.points().filter { $0.date > last.date && $0.date <= end }
         guard !future.isEmpty else { return [] }
         return [Forecast.Point(date: last.date, median: last.value, low: last.value, high: last.value)] + future
-    }
-
-    private func load() async {
-        let to = Date()
-        let from = to.addingTimeInterval(-range.seconds)
-        points = await monitor.store.series(metric, from: from, to: to, bucket: range.bucket)
-        if metric == .batteryPercent {
-            let store = monitor.store
-            async let adapter = store.series(.onAC, from: from, to: to, bucket: range.bucket)
-            async let charging = store.series(.charging, from: from, to: to, bucket: range.bucket)
-            async let batteryPower = store.series(.batteryPower, from: from, to: to, bucket: range.bucket)
-            powerSpans = Self.spans(adapter: await adapter, charging: await charging,
-                                    batteryPower: await batteryPower, bucket: range.bucket)
-        }
-    }
-
-    /// Merges buckets where the Mac was mostly on the adapter into continuous spans, split by
-    /// whether the battery was charging. History recorded before the charging state was stored
-    /// falls back to the battery's power flow (charging = energy going in).
-    private static func spans(adapter: [ChartPoint], charging: [ChartPoint], batteryPower: [ChartPoint],
-                              bucket: TimeInterval) -> [PowerSpan] {
-        let chargingByDate = Dictionary(charging.map { ($0.date, $0.value) }, uniquingKeysWith: { a, _ in a })
-        let powerByDate = Dictionary(batteryPower.map { ($0.date, $0.value) }, uniquingKeysWith: { a, _ in a })
-        var spans: [PowerSpan] = []
-        for point in adapter where point.value >= 0.5 {
-            let isCharging = chargingByDate[point.date].map { $0 >= 0.5 } ?? ((powerByDate[point.date] ?? 0) > 0.5)
-            let kind: PowerSpan.Kind = isCharging ? .charging : .notCharging
-            let end = point.date.addingTimeInterval(bucket)
-            if let last = spans.last, last.kind == kind, point.date.timeIntervalSince(last.end) <= bucket * 1.5 {
-                spans[spans.count - 1].end = end
-            } else {
-                spans.append(PowerSpan(kind: kind, start: point.date, end: end))
-            }
-        }
-        return spans
     }
 
     private func label(at date: Date) -> String? {

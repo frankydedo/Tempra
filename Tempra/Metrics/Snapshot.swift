@@ -52,6 +52,8 @@ struct Snapshot: Sendable {
 
     // Battery & power
     var battery: BatteryInfo?
+    /// Real-time power by component (SMC and IOReport).
+    var power = PowerReading()
 
     // I/O (bytes per second)
     var netIn: Double = 0

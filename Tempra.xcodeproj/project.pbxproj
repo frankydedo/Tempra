@@ -15,6 +15,8 @@
 		3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2AE23943FDA6134BAF50993 /* HistoryStore.swift */; };
 		3D9E5947C5B492F7E8A9E99E /* Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C522DCEF4FC994D66BF2DB /* Sections.swift */; };
 		461517966B348F2B8100C02F /* MemoryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */; };
+		4CB2B55C9989DD925518FC8B /* PowerReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1350FB00213ABA107C8E1D /* PowerReader.swift */; };
+		4E7278B05A46064BDFA58B73 /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105C01B0B1090EA1E453D575 /* ChartData.swift */; };
 		519E6BFF0D8753053605ADCD /* worker.py in Resources */ = {isa = PBXBuildFile; fileRef = ABD72B5098790E988B517A5E /* worker.py */; };
 		524D6CB0EADAECF0ACE108AE /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 8AA0FBE68734288C7C8BCE49 /* AppIcon.icon */; };
 		5B7837EC822A1C022E17A949 /* AppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD5439B8AEB329B5E43DF5C /* AppIcon.swift */; };
@@ -25,6 +27,7 @@
 		83CF944330412764A4436855 /* IOReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CEE481C0E5AACF68B87EB8 /* IOReader.swift */; };
 		8CE3DC5DAEA18501031EDFFC /* Indigo.png in Resources */ = {isa = PBXBuildFile; fileRef = BEF5BB73711B7DDB1B340F9E /* Indigo.png */; };
 		8FDE4FD85A1D464C914FEE63 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7039293397FD5EE0BA08FA /* Settings.swift */; };
+		A4515266593DB7D28C732789 /* IOReport.c in Sources */ = {isa = PBXBuildFile; fileRef = 96C44237EE810BFA089DAF6A /* IOReport.c */; };
 		A6B72B0D339196B5E190C0D7 /* HealthStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD25654E591CEDEF675931FF /* HealthStatus.swift */; };
 		A7529E9F24CCF0A51569A385 /* setup.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3693C24303A6402F9EEDBD97 /* setup.sh */; };
 		AAC109AA0BBB8C0B3D1117E4 /* Sky.png in Resources */ = {isa = PBXBuildFile; fileRef = 678CB675DB7F52B73F34E021 /* Sky.png */; };
@@ -48,6 +51,7 @@
 /* Begin PBXFileReference section */
 		04052B909EA02355924185FB /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
 		0AE724A836D144EFBABEDB6D /* Tempra-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tempra-Bridging-Header.h"; sourceTree = "<group>"; };
+		105C01B0B1090EA1E453D575 /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
 		1D3248522DAB166218CA2BA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		282975EFE704F1D131DC1B03 /* DebugSnapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugSnapshots.swift; sourceTree = "<group>"; };
 		2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryReader.swift; sourceTree = "<group>"; };
@@ -71,6 +75,8 @@
 		77CEE481C0E5AACF68B87EB8 /* IOReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOReader.swift; sourceTree = "<group>"; };
 		8A13DC16A79768CC4246F4BC /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8AA0FBE68734288C7C8BCE49 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		96C44237EE810BFA089DAF6A /* IOReport.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = IOReport.c; sourceTree = "<group>"; };
+		9B1350FB00213ABA107C8E1D /* PowerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerReader.swift; sourceTree = "<group>"; };
 		ABD72B5098790E988B517A5E /* worker.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = worker.py; sourceTree = "<group>"; };
 		ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessReader.swift; sourceTree = "<group>"; };
 		AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tiles.swift; sourceTree = "<group>"; };
@@ -85,6 +91,7 @@
 		E0CD35EE93C872B9F514BD84 /* ThermalReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalReader.swift; sourceTree = "<group>"; };
 		E56F4E54C30A6C73000190D8 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		E58817591800ADE36E48A22B /* BatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReader.swift; sourceTree = "<group>"; };
+		E76E192281D004A6CD7F7F04 /* IOReport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOReport.h; sourceTree = "<group>"; };
 		E790887196C70537A5A3C1F4 /* GPUReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPUReader.swift; sourceTree = "<group>"; };
 		EC7B4E5AC4373D6B284DB35C /* Tempra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -100,6 +107,7 @@
 				CD25654E591CEDEF675931FF /* HealthStatus.swift */,
 				77CEE481C0E5AACF68B87EB8 /* IOReader.swift */,
 				2A48F1AEE80AEA892C0479AD /* MemoryReader.swift */,
+				9B1350FB00213ABA107C8E1D /* PowerReader.swift */,
 				ACFEEA65D5521A4D64DFC35F /* ProcessReader.swift */,
 				04052B909EA02355924185FB /* Snapshot.swift */,
 				440C5501C0C50DE2EEC8FEA0 /* SystemMonitor.swift */,
@@ -112,6 +120,8 @@
 			isa = PBXGroup;
 			children = (
 				1D3248522DAB166218CA2BA9 /* Info.plist */,
+				96C44237EE810BFA089DAF6A /* IOReport.c */,
+				E76E192281D004A6CD7F7F04 /* IOReport.h */,
 				3FE43A32E42EC2E63059D34D /* SMC.c */,
 				D77625FA8EBC64DD1FD80329 /* SMC.h */,
 				0AE724A836D144EFBABEDB6D /* Tempra-Bridging-Header.h */,
@@ -123,6 +133,7 @@
 		3AED6878A934983638F43A88 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				105C01B0B1090EA1E453D575 /* ChartData.swift */,
 				B1922F1CDB94A0BCCBFC4522 /* Charts.swift */,
 				AE90A7E5B3C599C2C5B9FE8B /* Tiles.swift */,
 			);
@@ -323,6 +334,7 @@
 				5B7837EC822A1C022E17A949 /* AppIcon.swift in Sources */,
 				B4092B3FF03E1E44884B073F /* BatteryReader.swift in Sources */,
 				6DFD496F16A37F9A835708F7 /* CPUReader.swift in Sources */,
+				4E7278B05A46064BDFA58B73 /* ChartData.swift in Sources */,
 				1C76B3DE579D8CE4F04CC0CC /* Charts.swift in Sources */,
 				2086BC8806DA54007E8DF682 /* DashboardView.swift in Sources */,
 				BB6CB24B78724EFE4D47B3E4 /* DebugSnapshots.swift in Sources */,
@@ -332,9 +344,11 @@
 				A6B72B0D339196B5E190C0D7 /* HealthStatus.swift in Sources */,
 				3BD6B3A892F57A6674199CBC /* HistoryStore.swift in Sources */,
 				83CF944330412764A4436855 /* IOReader.swift in Sources */,
+				A4515266593DB7D28C732789 /* IOReport.c in Sources */,
 				DB48A326397865F44477F14F /* Log.swift in Sources */,
 				461517966B348F2B8100C02F /* MemoryReader.swift in Sources */,
 				E599D43E22D6D8047D87C7F5 /* Metric.swift in Sources */,
+				4CB2B55C9989DD925518FC8B /* PowerReader.swift in Sources */,
 				6651CEFA21BF8FADF66CD4E6 /* ProcessReader.swift in Sources */,
 				F8A2E3FA5C3902EA10FCAD02 /* SMC.c in Sources */,
 				3D9E5947C5B492F7E8A9E99E /* Sections.swift in Sources */,

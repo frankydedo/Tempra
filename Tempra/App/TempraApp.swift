@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             SystemMonitor.shared.start()
             ForecastService.shared.start()
+            ChartDataCache.shared.startBackgroundRefresh()
             #if DEBUG
             DebugSnapshots.runIfRequested()
             #endif

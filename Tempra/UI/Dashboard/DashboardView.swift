@@ -40,6 +40,13 @@ struct DashboardView: View {
     @AppStorage("dashboardRange") private var range: TimeRange = .h1
 
     var body: some View {
+        dashboard
+            // Charts redraw only while this window is on screen (not closed, minimised or covered).
+            .background(WindowVisibilityReader { UIVisibility.shared.dashboard = $0 })
+            .onDisappear { UIVisibility.shared.dashboard = false }
+    }
+
+    private var dashboard: some View {
         NavigationSplitView {
             List(selection: Binding(get: { section }, set: { section = $0 ?? .overview })) {
                 Section("Monitor") {

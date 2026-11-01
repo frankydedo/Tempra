@@ -18,6 +18,9 @@ struct CPUSection: View {
                 BigStat(label: "System", value: Metric.cpu.format(s.cpuSystem))
                 BigStat(label: "Load average (1/5/15 min)",
                         value: String(format: "%.2f  %.2f  %.2f", s.loadAverage.0, s.loadAverage.1, s.loadAverage.2))
+                if let watts = s.power.cpuAndRest {
+                    BigStat(label: "Power (CPU & rest of chip)", value: Metric.cpuPower.format(watts))
+                }
             }
 
             Card(title: "History", systemImage: "chart.xyaxis.line") {
@@ -82,6 +85,9 @@ struct GPUSection: View {
                 BigStat(label: "Renderer", value: Metric.gpu.format(s.gpuRenderer))
                 BigStat(label: "Tiler", value: Metric.gpu.format(s.gpuTiler))
                 BigStat(label: "Unified memory in use", value: Format.bytes(s.gpuMemoryInUse))
+                if let watts = s.power.gpu {
+                    BigStat(label: "Power", value: Metric.gpuPower.format(watts), color: Metric.gpuPower.color)
+                }
             }
 
             Card(title: "History", systemImage: "chart.xyaxis.line") {
@@ -238,6 +244,9 @@ struct BatterySection: View {
                 Card(title: "System Power", systemImage: "bolt.fill") {
                     HistoryChart(metric: .systemPower, range: range, forecast: forecaster.forecast(for: .systemPower), height: 160)
                 }
+                Card(title: "Power by Component", systemImage: "square.stack.3d.up") {
+                    PowerBreakdown(snapshot: s, range: range)
+                }
                 Card(title: "Battery Health", systemImage: "heart.text.square") {
                     BatteryHealthChart(history: healthHistory, forecast: forecaster.forecasts[ForecastKey.health])
                 }
@@ -255,6 +264,86 @@ struct BatterySection: View {
         if b.isCharging { return b.minutesToFull.map { "Full in \(Format.duration(minutes: Double($0)))" } ?? "Calculating…" }
         if b.onAC { return "On power adapter" }
         return b.minutesToEmpty.map { "\(Format.duration(minutes: Double($0))) left" } ?? "Calculating…"
+    }
+}
+
+/// Where the power goes, live and over time: CPU (with the rest of the chip), GPU, and everything
+/// else in the Mac (display, SSD, Wi-Fi…), stacked so the total is the system power.
+struct PowerBreakdown: View {
+    let snapshot: Snapshot
+    let range: TimeRange
+
+    private struct Part: Identifiable {
+        var id: String { "\(name)-\(date.timeIntervalSince1970)" }
+        let name: String
+        let date: Date
+        let watts: Double
+    }
+
+    private static let parts: [(name: String, color: Color)] = [
+        ("CPU & rest of chip", .blue), ("GPU", .indigo), ("Rest of the Mac", .gray),
+    ]
+
+    @State private var history: [Part] = []
+    private let visibility = UIVisibility.shared
+
+    var body: some View {
+        let p = snapshot.power
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 28) {
+                BigStat(label: "Whole Mac", value: p.system.map(Metric.systemPower.format) ?? "—", color: .yellow)
+                BigStat(label: "Chip (SoC)", value: p.soc.map(Metric.socPower.format) ?? "—")
+                BigStat(label: "CPU & rest of chip", value: p.cpuAndRest.map(Metric.cpuPower.format) ?? "—", color: .blue)
+                BigStat(label: "GPU", value: p.gpu.map(Metric.gpuPower.format) ?? "—", color: .indigo)
+                if snapshot.battery?.onAC == true, let input = p.adapterInput {
+                    BigStat(label: "From adapter", value: Metric.adapterInput.format(input))
+                }
+            }
+            if history.isEmpty {
+                Text("Collecting data…").font(.callout).foregroundStyle(.secondary).frame(height: 140)
+            } else {
+                Chart(history) { part in
+                    AreaMark(x: .value("Time", part.date), y: .value("Watts", part.watts))
+                        .foregroundStyle(by: .value("Part", part.name))
+                        .interpolationMethod(.monotone)
+                }
+                .chartForegroundStyleScale(domain: Self.parts.map(\.name), range: Self.parts.map { $0.color.opacity(0.7) })
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine().foregroundStyle(.quaternary)
+                        AxisValueLabel { if let v = value.as(Double.self) { Text(Metric.systemPower.format(v)).font(.caption2) } }
+                    }
+                }
+                .chartLegend(position: .bottom, alignment: .leading)
+                .frame(height: 160)
+            }
+            Text("Measured live by the SMC (whole Mac, chip) and IOReport (GPU). macOS doesn't expose the Neural Engine or memory without administrator rights, so they're part of the chip and \u{201C}rest of the Mac\u{201D}.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .task(id: "\(range.rawValue)-\(visibility.dashboard)") {
+            guard visibility.dashboard else { return }
+            while !Task.isCancelled {
+                await load()
+                try? await Task.sleep(for: .seconds(range.refreshInterval))
+            }
+        }
+    }
+
+    private func load() async {
+        let cache = ChartDataCache.shared
+        func series(_ metric: Metric) async -> [Date: Double] {
+            let entry = await cache.load(.init(metric: metric, range: range))
+            return Dictionary(entry.points.map { ($0.date, $0.value) }, uniquingKeysWith: { a, _ in a })
+        }
+        let cpu = await series(.cpuPower), gpu = await series(.gpuPower)
+        let soc = await series(.socPower), system = await series(.systemPower)
+        history = soc.keys.sorted().flatMap { date -> [Part] in
+            guard let chip = soc[date] else { return [] }
+            let rest = max((system[date] ?? chip) - chip, 0)
+            return [Part(name: "CPU & rest of chip", date: date, watts: cpu[date] ?? chip),
+                    Part(name: "GPU", date: date, watts: gpu[date] ?? 0),
+                    Part(name: "Rest of the Mac", date: date, watts: rest)]
+        }
     }
 }
 

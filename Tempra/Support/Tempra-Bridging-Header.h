@@ -10,6 +10,7 @@
 #import <IOKit/hidsystem/IOHIDEventSystemClient.h>
 #import <libproc.h>
 #import "SMC.h"
+#import "IOReport.h"
 
 // IOHIDEventRef is a CF type; declared as CFTypeRef so Swift manages it via Unmanaged.
 IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);

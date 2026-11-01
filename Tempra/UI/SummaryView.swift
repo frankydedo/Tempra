@@ -6,8 +6,30 @@ struct SummaryView: View {
     @Environment(\.openSettings) private var openSettings
     private let monitor = SystemMonitor.shared
     private let forecaster = ForecastService.shared
+    @State private var visible = true
+    @State private var height: CGFloat = 520
 
     var body: some View {
+        // The panel's window stays alive after it closes; while it's off screen, show a same-sized
+        // placeholder so the tiles and sparklines stop re-rendering on every sample.
+        Group {
+            if visible {
+                content
+                    .background(GeometryReader { proxy in
+                        Color.clear.onAppear { height = proxy.size.height }
+                            .onChange(of: proxy.size.height) { _, new in height = new }
+                    })
+            } else {
+                Color.clear.frame(width: 360, height: height)
+            }
+        }
+        .background(WindowVisibilityReader { isVisible in
+            visible = isVisible
+            UIVisibility.shared.summary = isVisible
+        })
+    }
+
+    @ViewBuilder private var content: some View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 12) {
             header
