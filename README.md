@@ -293,7 +293,7 @@ Debug builds can render every view to PNG without screen-recording permission, w
 above were produced:
 
 ```bash
-build/DerivedData/Build/Products/Debug/Tempra.app/Contents/MacOS/Tempra -TempraSnapshotDir docs/screenshots
+build/DerivedData.noindex/Build/Products/Debug/Tempra.app/Contents/MacOS/Tempra -TempraSnapshotDir docs/screenshots
 ```
 
 ## License
