@@ -25,6 +25,8 @@ targets:
       path: Tempra/Support/Info.plist
       properties:
         CFBundleDisplayName: Tempra
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
         NSHumanReadableCopyright: "© 2026 Francesco De Dominicis"

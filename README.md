@@ -16,6 +16,8 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 [![Timestral](https://img.shields.io/badge/Forecasts-Timestral%205M-FA520F)](https://huggingface.co/mistralai/Timestral-5M)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![On-device](https://img.shields.io/badge/data-100%25%20on--device-34C759)](#privacy)
+[![Release](https://img.shields.io/github/v/release/frankydedo/Tempra?color=5856D6)](https://github.com/frankydedo/Tempra/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 [Features](#features) · [Screenshots](#screenshots) · [Install](#installation) · [Forecasting](#forecasting-with-timestral) · [Architecture](#architecture) · [Roadmap](#roadmap)
 
@@ -72,17 +74,35 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 ## Requirements
 
 - A Mac with **Apple Silicon** (M1 or later) running **macOS 14 Sonoma** or later
-- **Xcode 16+** and **[XcodeGen](https://github.com/yonaskolb/XcodeGen)** to build
 - **[uv](https://github.com/astral-sh/uv)** for the optional forecasting engine (`brew install uv`)
+- To build from source: **Xcode 26+** (for Icon Composer icons) and **[XcodeGen](https://github.com/yonaskolb/XcodeGen)**
 
 ## Installation
+
+### Download
+
+1. Download `Tempra-x.y.z.zip` from the [latest release](https://github.com/frankydedo/Tempra/releases/latest) and unzip it.
+2. Move **Tempra.app** to **/Applications**.
+3. Open it. Tempra isn't notarized by Apple yet, so the first time macOS will refuse to open it:
+   go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+   Alternatively, from Terminal:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Tempra.app
+   ```
+
+### Build from source
 
 ```bash
 git clone https://github.com/frankydedo/Tempra.git && cd Tempra
 scripts/build.sh --install     # builds Release, copies to /Applications and launches
 ```
 
-Then open **Settings → General** to choose what appears in the menu bar and turn on **Open Tempra at login**.
+`scripts/package.sh` produces the release zip and its SHA-256 checksum in `build/`.
+
+### First run
+
+Open **Settings → General** to choose what appears in the menu bar and turn on **Open Tempra at login**.
 
 To work on the code in Xcode:
 
@@ -201,6 +221,13 @@ above were produced:
 ```bash
 build/DerivedData/Build/Products/Debug/Tempra.app/Contents/MacOS/Tempra -TempraSnapshotDir docs/screenshots
 ```
+
+## License
+
+Tempra is released under the [MIT License](LICENSE).
+
+Timestral's code is Apache 2.0 and its model weights are under Mistral's Modified MIT license. Neither is
+included in this repository: the forecasting engine downloads them when you install it.
 
 ## Acknowledgements
 
