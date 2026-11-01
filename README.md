@@ -35,7 +35,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
 | 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
-| 🪶 **Lightweight** | Native Swift, no Electron, no daemon with root privileges. The forecaster takes a few milliseconds per forecast on CPU, once a minute. |
+| 🪶 **Lightweight** | Native Swift, no daemon with root privileges. Charts only redraw while on screen, so Tempra uses about 1–2% of one core in the background; the forecaster a few milliseconds per minute. |
 | 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
 | 🔒 **Private** | No accounts, no telemetry, no network calls except the one-time model download. |
 
@@ -49,7 +49,8 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | **Thermals** | SoC average and hotspot, battery, SSD, thermal state | Apple Silicon HID temperature sensors |
 | **Fans** | Speed of each fan, with its minimum and maximum | System Management Controller (SMC) |
 | **Battery** | Level, charging state, time remaining, cycles, health, capacities, voltage, current | `IOPowerSources`, `AppleSmartBattery` |
-| **Power** | Whole-system power draw, battery in/out watts, adapter | `AppleSmartBattery` telemetry |
+| **Power** | Whole Mac, chip (SoC), CPU & rest of chip, GPU, adapter input — live, every sample | SMC (`PSTR`, `PHPC`, `PDTR`), IOReport GPU energy |
+| **Battery flow** | Watts into or out of the battery, adapter rating | `AppleSmartBattery` |
 | **I/O** | Network down/up, disk read/write, free space | `getifaddrs`, `IOBlockStorageDriver` |
 | **Processes** | CPU and resident memory per process | `ps` |
 
@@ -247,7 +248,8 @@ history from **Settings → Data**.
 ## Roadmap
 
 **Metrics**
-- [ ] Per-component power (CPU, GPU, Neural Engine, DRAM) through a privileged helper and IOReport
+- [x] Live power by component without privileges: whole Mac, chip, CPU & rest of chip, GPU
+- [ ] Neural Engine and memory power (macOS only exposes them to privileged processes)
 - [ ] CPU cluster and GPU frequencies, GPU temperature
 - [ ] Per-app energy impact history
 - [ ] Intel Mac support (SMC thermals)
