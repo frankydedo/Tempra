@@ -7,6 +7,8 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     case gpu
     case memUsed = "mem_used"
     case memPressure = "mem_pressure"
+    /// macOS's memory pressure level: 1 normal, 2 warning, 4 critical.
+    case memLevel = "mem_level"
     case swap
     case socTemp = "soc_temp"
     case socTempMax = "soc_temp_max"
@@ -31,6 +33,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .gpu: "GPU"
         case .memUsed: "Memory Used"
         case .memPressure: "Memory Pressure"
+        case .memLevel: "Memory Pressure Level"
         case .swap: "Swap"
         case .socTemp: "SoC Temperature"
         case .socTempMax: "SoC Hotspot"
@@ -51,7 +54,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
 
     var unit: MetricUnit {
         switch self {
-        case .cpu, .gpu, .memUsed, .memPressure, .swap: .fraction
+        case .cpu, .gpu, .memUsed, .memPressure, .memLevel, .swap: .fraction
         case .socTemp, .socTempMax, .batteryTemp: .celsius
         case .fanRPM: .rpm
         case .batteryPercent: .percent
@@ -65,7 +68,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cpu: .blue
         case .gpu: .indigo
-        case .memUsed, .memPressure, .swap: .purple
+        case .memUsed, .memPressure, .memLevel, .swap: .purple
         case .socTemp, .socTempMax, .batteryTemp: .orange
         case .fanRPM: .cyan
         case .batteryPercent: .green
@@ -91,6 +94,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .gpu: s.gpu
         case .memUsed: s.memUsedFraction
         case .memPressure: s.memPressure
+        case .memLevel: Double(s.memPressureLevel.rawValue)
         case .swap: s.swapTotal > 0 ? Double(s.swapUsed) / Double(s.swapTotal) : 0
         case .socTemp: s.socTemp
         case .socTempMax: s.socTempMax

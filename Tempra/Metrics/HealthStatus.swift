@@ -64,6 +64,10 @@ enum HealthRules {
 
     static let healthWarning = 0.80
 
+    /// Memory is Warning when macOS's warning level held for this share of the last five minutes.
+    static let memoryWarningWindow: TimeInterval = 5 * 60
+    static let memoryWarningShare = 0.8
+
     /// A metric returns to a calmer state only after it has stayed there this long.
     static let recoveryDelay: TimeInterval = 120
     /// Metrics that can hover around a threshold. Battery and power follow the adapter instantly.
@@ -79,11 +83,11 @@ extension Snapshot {
             guard let gpu else { return .normal }
             return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu)
         case .memory:
-            switch memPressureLevel {
-            case .normal: return .normal
-            case .warning: return .warning
-            case .critical: return .critical
-            }
+            // macOS raises its "warning" level as a hint for apps to drop caches, often for a few
+            // seconds at a time, while Activity Monitor's graph stays green. Only a sustained warning
+            // means real pressure; critical is shown at once.
+            if memPressureLevel == .critical { return .critical }
+            return Self.sustainedMemoryWarning(live) ? .warning : .normal
         case .thermal:
             switch thermalState {
             case .nominal, .fair: return .normal
@@ -158,6 +162,17 @@ extension Snapshot {
               let firstAdapter = adapterWindow.first?.date, firstAdapter.timeIntervalSince(start) < 15 else { return false }
         return adapterWindow.allSatisfy { $0.value >= 0.5 }
             && powerWindow.allSatisfy { $0.value < HealthRules.adapterDischargeWatts }
+    }
+
+    /// True when macOS reported its memory "warning" level (or worse) for most of the last
+    /// `memoryWarningWindow`, and the readings actually cover that window.
+    private static func sustainedMemoryWarning(_ live: [Metric: [ChartPoint]]) -> Bool {
+        guard let levels = live[.memLevel], let now = levels.last?.date else { return false }
+        let start = now.addingTimeInterval(-HealthRules.memoryWarningWindow)
+        let window = levels.filter { $0.date >= start }
+        guard let first = window.first?.date, first.timeIntervalSince(start) < 15 else { return false }
+        let elevated = window.filter { $0.value >= Double(MemoryPressureLevel.warning.rawValue) }.count
+        return Double(elevated) / Double(window.count) >= HealthRules.memoryWarningShare
     }
 
     private static func loadState(_ value: Double) -> HealthState {
