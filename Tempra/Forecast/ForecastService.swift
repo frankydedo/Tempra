@@ -177,6 +177,20 @@ final class ForecastService {
         installer?.terminate()
     }
 
+    /// Asks the running worker to recompute now instead of at its next minute, then picks up the
+    /// result. Used when the power source changes so the battery forecast follows right away.
+    func requestRefresh(reason: String) {
+        guard let worker, worker.isRunning else { return }
+        kill(worker.processIdentifier, SIGUSR1)
+        Log.info(.forecast, "Refresh requested: \(reason)")
+        Task { [weak self] in
+            for delay in [1.5, 4.0] {
+                try? await Task.sleep(for: .seconds(delay))
+                await self?.reload()
+            }
+        }
+    }
+
     func restartWorker() {
         worker?.terminate()
         worker = nil
@@ -318,7 +332,25 @@ final class ForecastService {
     }
 
     func forecast(for metric: Metric) -> Forecast? {
-        ForecastKey.forMetric(metric).flatMap { forecasts[$0] }
+        if metric == .batteryPercent { return currentBatteryForecast }
+        return ForecastKey.forMetric(metric).flatMap { forecasts[$0] }
+    }
+
+    /// The battery forecast, or nil while it describes a power state the Mac has already left
+    /// (e.g. "held at 80%" just after unplugging). A fresh one follows within seconds.
+    var currentBatteryForecast: Forecast? {
+        guard let forecast = forecasts[ForecastKey.battery] else { return nil }
+        let monitor = SystemMonitor.shared
+        if let change = monitor.lastAdapterChange, forecast.generatedDate < change { return nil }
+        guard let b = monitor.latest.battery, let kind = forecast.summary?.kind else { return forecast }
+        let expected = !b.onAC ? "time_to_empty" : (b.isCharging ? "time_to_full" : "held")
+        return kind == expected ? forecast : nil
+    }
+
+    /// Text for the battery forecast; "Updating forecast…" while the current one is stale.
+    var batteryForecastText: String? {
+        guard forecasts[ForecastKey.battery] != nil else { return nil }
+        return currentBatteryForecast.map { $0.batteryText ?? "—" } ?? "Updating forecast…"
     }
 
     /// Copies the worker sources out of the app bundle so the venv can live next to them.

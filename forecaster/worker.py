@@ -24,6 +24,8 @@ reality fell inside the 10–90% band). A 7-day summary is published for the app
 
 Run once:      python worker.py --db <history.sqlite> --once
 Run as daemon: python worker.py --db <history.sqlite> --interval 60 --parent-pid <pid>
+               SIGUSR1 makes the daemon refresh right away (the app sends it when the adapter
+               is plugged or unplugged, so the battery forecast follows within a second).
 """
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import sqlite3
 import sys
 import time
@@ -433,6 +436,14 @@ def main() -> int:
         return 1
     log("model ready")
 
+    refresh_requested = False
+
+    def request_refresh(signum, frame):
+        nonlocal refresh_requested
+        refresh_requested = True
+
+    signal.signal(signal.SIGUSR1, request_refresh)
+
     while True:
         try:
             run_once(args.db, model, args.model)
@@ -443,11 +454,15 @@ def main() -> int:
             return 0
         deadline = time.time() + args.interval
         while time.time() < deadline:
+            if refresh_requested:
+                refresh_requested = False
+                log("refresh requested by the app")
+                break
             # Exit when Tempra quits (we get re-parented to launchd).
             if args.parent_pid and os.getppid() != args.parent_pid:
                 log("parent exited, stopping")
                 return 0
-            time.sleep(2)
+            time.sleep(0.25)
 
 
 if __name__ == "__main__":

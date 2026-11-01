@@ -187,7 +187,8 @@ struct BatterySection: View {
                             state: monitor.health(.battery))
                     BigStat(label: "System power", value: b.systemPower.map(Metric.systemPower.format) ?? "—", color: .yellow,
                             state: monitor.health(.power))
-                    BigStat(label: b.batteryPower >= 0 ? "Into battery" : "Out of battery",
+                    BigStat(label: (b.batteryPower >= 0 ? "Into battery" : "Out of battery")
+                                + (monitor.lastAdapterChange.map { s.date.timeIntervalSince($0) < 60 } == true ? " (updating…)" : ""),
                             value: Metric.batteryPower.format(abs(b.batteryPower)))
                     BigStat(label: b.healthCondition.map { "Maximum capacity · \($0)" } ?? "Maximum capacity",
                             value: String(format: "%.0f%%", b.health * 100), state: monitor.health(.batteryHealth))
@@ -196,9 +197,9 @@ struct BatterySection: View {
                 HStack(alignment: .top, spacing: 16) {
                     Card(title: "Time Remaining", systemImage: "clock") {
                         InfoRow(label: "macOS estimate", value: macOSEstimate(b))
-                        InfoRow(label: "Timestral forecast", value: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? "—")
-                        if let unplugged = forecaster.forecasts[ForecastKey.battery]?.unpluggedText,
-                           forecaster.forecasts[ForecastKey.battery]?.summary?.kind == "time_to_full" {
+                        InfoRow(label: "Timestral forecast", value: forecaster.batteryForecastText ?? "—")
+                        if let unplugged = forecaster.currentBatteryForecast?.unpluggedText,
+                           forecaster.currentBatteryForecast?.summary?.kind == "time_to_full" {
                             InfoRow(label: "If unplugged now", value: unplugged)
                         }
                     }

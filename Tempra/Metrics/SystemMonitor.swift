@@ -73,6 +73,8 @@ final class SystemMonitor {
     private(set) var hasSample = false
     private(set) var live: [Metric: [ChartPoint]] = [:]
     private(set) var processes: [ProcessSample] = []
+    /// When the power adapter was last plugged in or unplugged (nil until it happens).
+    private(set) var lastAdapterChange: Date?
 
     let store = HistoryStore()
 
@@ -110,7 +112,10 @@ final class SystemMonitor {
 
     private func tick() async {
         let snapshot = await sampler.sample()
-        if hasSample { logChanges(from: latest, to: snapshot) }
+        if hasSample {
+            logChanges(from: latest, to: snapshot)
+            await refreshForecastsIfPowerSourceChanged(from: latest, to: snapshot)
+        }
         latest = snapshot
         hasSample = true
         appendLive(snapshot)
@@ -130,6 +135,16 @@ final class SystemMonitor {
         if processesVisible {
             await refreshProcesses()
         }
+    }
+
+    /// Publishes the new battery state and wakes the forecaster as soon as the adapter is plugged
+    /// or unplugged (or charging starts/stops), instead of waiting for the next minute.
+    private func refreshForecastsIfPowerSourceChanged(from old: Snapshot, to new: Snapshot) async {
+        guard let before = old.battery, let after = new.battery,
+              before.onAC != after.onAC || before.isCharging != after.isCharging else { return }
+        if before.onAC != after.onAC { lastAdapterChange = new.date }
+        await publishBatteryState(after)
+        ForecastService.shared.requestRefresh(reason: after.onAC ? (after.isCharging ? "charging" : "on adapter") : "on battery")
     }
 
     /// Logs adapter and charging changes, and every health state transition with the values behind it.

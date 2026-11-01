@@ -110,7 +110,7 @@ struct OverviewSection: View {
                          detail: "Thermal state: \(s.thermalStateText)", state: monitor.health(.thermal))
                 StatTile(title: "Battery", systemImage: "battery.75percent",
                          value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
-                         detail: forecaster.forecasts[ForecastKey.battery]?.batteryText ?? s.batteryStateText,
+                         detail: forecaster.batteryForecastText ?? s.batteryStateText,
                          state: monitor.health(.battery))
                 StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
                          detail: "Whole system", state: monitor.health(.power))
@@ -158,7 +158,7 @@ struct ForecastsSection: View {
                 }
             }
 
-            if let battery = forecaster.forecasts[ForecastKey.battery] {
+            if let battery = forecaster.currentBatteryForecast {
                 ForecastCard(metric: .batteryPercent, forecast: battery, headline: battery.batteryText)
             }
             ForEach([(Metric.cpu, ForecastKey.cpu), (.gpu, ForecastKey.gpu), (.memPressure, ForecastKey.memoryPressure),

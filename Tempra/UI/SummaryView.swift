@@ -122,7 +122,7 @@ struct SummaryView: View {
     @ViewBuilder
     private var forecastRows: some View {
         let f = forecaster.forecasts
-        if let battery = f[ForecastKey.battery], let text = battery.batteryText, monitor.latest.battery != nil {
+        if monitor.latest.battery != nil, let text = forecaster.batteryForecastText {
             ForecastRow(icon: "battery.75percent", text: text)
         }
         if let cpu = f[ForecastKey.cpu] {
@@ -163,6 +163,8 @@ struct SummaryView: View {
 
     private func powerDetail(_ s: Snapshot) -> String {
         guard let b = s.battery else { return "" }
+        // The battery gauge lags the adapter by 30–60 s; don't show a stale flow.
+        if let change = monitor.lastAdapterChange, s.date.timeIntervalSince(change) < 60 { return "Battery reading updating…" }
         let flow = b.batteryPower
         if abs(flow) < 0.1 { return "Battery idle" }
         return flow > 0 ? "Charging at \(Metric.batteryPower.format(flow))" : "Battery \(Metric.batteryPower.format(-flow)) out"

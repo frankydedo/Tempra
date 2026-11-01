@@ -50,8 +50,12 @@ enum HealthRules {
     static let runtimeCritical = 1.0
     /// On the adapter: share of the adapter's rating above which it may not keep up.
     static let adapterWarning = 0.9
-    /// On the adapter: battery current (A) below which the battery is helping the adapter.
-    static let adapterDischargeAmps = -0.3
+    /// On the adapter: battery power (W) below which the battery is helping the adapter.
+    static let adapterDischargeWatts = -3.0
+    /// ...and for how long it must last. The battery gauge refreshes only every 30–60 s, so right
+    /// after plugging in it still reports the discharge; requiring two minutes of continuous
+    /// adapter + discharge readings filters that out.
+    static let adapterDischargeWindow: TimeInterval = 120
 
     static let diskWarningBytes: Int64 = 20_000_000_000
     static let diskWarningFraction = 0.10
@@ -96,7 +100,7 @@ extension Snapshot {
         case .power:
             guard let b = battery, let power = b.systemPower, power > 0 else { return .normal }
             if b.onAC {
-                if b.amperage < HealthRules.adapterDischargeAmps { return .critical }
+                if Self.sustainedDischargeOnAdapter(live) { return .critical }
                 if let watts = b.adapterWatts, watts > 0, power > Double(watts) * HealthRules.adapterWarning { return .warning }
                 return .normal
             }
@@ -134,6 +138,19 @@ extension Snapshot {
         case .disk:
             return "free \(Format.bytes(Double(diskFree))) of \(Format.bytes(Double(diskTotal)))"
         }
+    }
+
+    /// True when every reading of the last `adapterDischargeWindow` was on the adapter *and*
+    /// discharging, and the readings actually cover that whole window.
+    private static func sustainedDischargeOnAdapter(_ live: [Metric: [ChartPoint]]) -> Bool {
+        guard let adapter = live[.onAC], let power = live[.batteryPower], let now = power.last?.date else { return false }
+        let start = now.addingTimeInterval(-HealthRules.adapterDischargeWindow)
+        let window = { (points: [ChartPoint]) in points.filter { $0.date >= start } }
+        let adapterWindow = window(adapter), powerWindow = window(power)
+        guard let first = powerWindow.first?.date, first.timeIntervalSince(start) < 15,
+              let firstAdapter = adapterWindow.first?.date, firstAdapter.timeIntervalSince(start) < 15 else { return false }
+        return adapterWindow.allSatisfy { $0.value >= 0.5 }
+            && powerWindow.allSatisfy { $0.value < HealthRules.adapterDischargeWatts }
     }
 
     private static func loadState(_ value: Double) -> HealthState {
