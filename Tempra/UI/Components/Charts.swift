@@ -84,8 +84,8 @@ struct HistoryChart: View {
             case charging, notCharging
 
             var label: String { self == .charging ? "Charging" : "On adapter, not charging" }
-            var color: Color { self == .charging ? .blue : .yellow }
-            var opacity: Double { self == .charging ? 0.13 : 0.18 }
+            var color: Color { self == .charging ? .green : .yellow }
+            var opacity: Double { self == .charging ? 0.16 : 0.18 }
         }
 
         var id: Date { start }
