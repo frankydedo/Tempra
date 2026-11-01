@@ -255,7 +255,9 @@ struct HistoryChart: View {
 
     private func autoDomain(_ forecast: [Forecast.Point]) -> ClosedRange<Double> {
         let values = points.map(\.value) + forecast.flatMap { [$0.low, $0.high] }
-        guard let lo = values.min(), let hi = values.max() else { return 0...1 }
+        guard let lo = values.min(), var hi = values.max() else { return 0...1 }
+        // A flat series (a fan that stays off, an idle network) still needs a readable axis.
+        hi = max(hi, lo + metric.unit.minimumSpan)
         let pad = max((hi - lo) * 0.1, abs(hi) * 0.05, 0.001)
         let lower = metric.unit == .celsius ? lo - pad : max(0, lo - pad)
         return lower...(hi + pad)

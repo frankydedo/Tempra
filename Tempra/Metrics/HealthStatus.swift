@@ -63,6 +63,11 @@ enum HealthRules {
     static let diskCriticalFraction = 0.03
 
     static let healthWarning = 0.80
+
+    /// A metric returns to a calmer state only after it has stayed there this long.
+    static let recoveryDelay: TimeInterval = 120
+    /// Metrics that can hover around a threshold. Battery and power follow the adapter instantly.
+    static let hysteresis: Set<HealthMetric> = [.cpu, .gpu, .memory, .thermal, .disk]
 }
 
 extension Snapshot {
@@ -182,7 +187,7 @@ extension MenuBarDisplay {
         case .cpu: .cpu
         case .gpu: .gpu
         case .memory: .memory
-        case .temperature: .thermal
+        case .temperature, .fan: .thermal
         case .battery: .battery
         case .power: .power
         }
@@ -192,6 +197,6 @@ extension MenuBarDisplay {
 @MainActor
 extension SystemMonitor {
     func health(_ metric: HealthMetric) -> HealthState {
-        latest.health(metric, live: live)
+        healthStates[metric] ?? latest.health(metric, live: live)
     }
 }

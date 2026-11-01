@@ -29,7 +29,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 
 | | |
 |---|---|
-| 🧭 **Lives in the menu bar** | An icon plus one live value of your choice (CPU, GPU, memory pressure, temperature, battery or power). The icon follows the statistic you show. |
+| 🧭 **Lives in the menu bar** | An icon plus one live value of your choice (CPU, GPU, memory pressure, temperature, fan speed, battery or power). The icon follows the statistic you show. |
 | 🚦 **Health at a glance** | Every key metric is Normal, Warning or Critical, using macOS's own signals where they exist. Warning values turn orange, Critical red, in the panel, the dashboard and the menu bar. |
 | 🪟 **Glanceable summary** | Click the icon for a compact panel with the essentials, sparklines and the latest forecasts. |
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
@@ -47,6 +47,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | **GPU** | Utilization, renderer, tiler, unified memory in use | `IOAccelerator` performance statistics |
 | **Memory** | Pressure, used, app, wired, compressed, cached, swap | `host_statistics64`, `sysctl` |
 | **Thermals** | SoC average and hotspot, battery, SSD, thermal state | Apple Silicon HID temperature sensors |
+| **Fans** | Speed of each fan, with its minimum and maximum | System Management Controller (SMC) |
 | **Battery** | Level, charging state, time remaining, cycles, health, capacities, voltage, current | `IOPowerSources`, `AppleSmartBattery` |
 | **Power** | Whole-system power draw, battery in/out watts, adapter | `AppleSmartBattery` telemetry |
 | **I/O** | Network down/up, disk read/write, free space | `getifaddrs`, `IOBlockStorageDriver` |
@@ -65,6 +66,8 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | Startup disk | Free space | Under 20 GB or 10% | Under 5 GB or 3% |
 
 Normal is left uncoloured so that Warning and Critical stand out; the state is always written out too.
+A state that gets worse shows at once; one that improves waits two minutes, so a metric hovering around a
+threshold doesn't make the colours flicker.
 
 ## Screenshots
 
@@ -152,7 +155,7 @@ battery. Tempra's forecasts use those links instead of predicting each metric on
 
 | Block | Steps · context · horizon | Targets | Conditioned on |
 |---|---|---|---|
-| **System** | 1 min · 14 days · 1 h | CPU, GPU, memory pressure, SoC temperature and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
+| **System** | 1 min · 14 days · 1 h | CPU, GPU, memory pressure, SoC temperature, fan speed and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
 | **Battery** | 5 min · 30 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
 | **Battery health** | 1 day · all · 180 days | Maximum capacity | — |
 
@@ -193,6 +196,9 @@ passed, compares it with what actually happened. **Forecasts → Accuracy** show
 - **Typical error**: mean absolute difference between forecast and reality, in the metric's unit.
 - **vs. "no change"**: how much better (or worse) Timestral did than simply assuming the current value stays put.
 - **Inside band**: how often reality fell inside the 10–90% band. A well-calibrated forecast is close to 80%.
+
+Bands calibrate themselves: every scored forecast widens or narrows its metric's band a little, so that over
+time about 80% of what actually happens falls inside it.
 
 Battery forecasts are scored only while the adapter state stays the same as when they were made, and the
 "held at the charge limit" state is not scored, since it isn't a real prediction.
@@ -243,7 +249,6 @@ history from **Settings → Data**.
 **Metrics**
 - [ ] Per-component power (CPU, GPU, Neural Engine, DRAM) through a privileged helper and IOReport
 - [ ] CPU cluster and GPU frequencies, GPU temperature
-- [ ] Fan speed on Macs with fans (SMC)
 - [ ] Per-app energy impact history
 - [ ] Intel Mac support (SMC thermals)
 

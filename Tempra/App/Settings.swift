@@ -21,7 +21,7 @@ enum SettingsKey {
 
 /// What the menu bar item shows next to the icon.
 enum MenuBarDisplay: String, CaseIterable, Identifiable {
-    case iconOnly, cpu, gpu, memory, temperature, battery, power
+    case iconOnly, cpu, gpu, memory, temperature, fan, battery, power
 
     var id: String { rawValue }
 
@@ -32,6 +32,7 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         case .gpu: "GPU usage"
         case .memory: "Memory pressure"
         case .temperature: "SoC temperature"
+        case .fan: "Fan speed"
         case .battery: "Battery level"
         case .power: "Power draw"
         }
@@ -45,6 +46,7 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         case .gpu: "cube"
         case .memory: "memorychip"
         case .temperature: "thermometer.medium"
+        case .fan: "fan"
         case .battery: s.battery.map(Self.batterySymbol) ?? "battery.100percent"
         case .power: "bolt.fill"
         }
@@ -68,6 +70,7 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         case .gpu: s.gpu.map(Metric.gpu.format)
         case .memory: Metric.memPressure.format(s.memPressure)
         case .temperature: s.socTemp.map(Metric.socTemp.format)
+        case .fan: s.fanRPM.map { $0 > 0 ? String(format: "%.0f", $0) : "Off" }
         case .battery: s.battery.map { Metric.batteryPercent.format($0.percent) }
         case .power: s.battery?.systemPower.map(Metric.systemPower.format)
         }

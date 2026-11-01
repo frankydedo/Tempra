@@ -5,8 +5,8 @@ Reads Tempra's history database, forecasts the next hours with Mistral's Timestr
 where the app picks them up.
 
 Forecasts are multivariate:
-  * System block (1-minute steps, 14 days of context, next hour): CPU, GPU, memory pressure, SoC temperature and
-    system power are forecast jointly as variates of one series, so the model can use how they
+  * System block (1-minute steps, 14 days of context, next hour): CPU, GPU, memory pressure, SoC temperature,
+    fan speed and system power are forecast jointly as variates of one series, so the model can use how they
     move together. Whether the Mac is on its adapter is a past covariate; time of day is a
     known-future covariate.
   * Battery block (5-minute steps, 30 days of context, next 12 hours): Timestral forecasts system power together
@@ -17,6 +17,9 @@ Forecasts are multivariate:
 
 Longer contexts let Timestral see daily and weekly habits. The model itself never changes
 (zero-shot); forecasts improve as the history it reads grows, up to these windows.
+
+Bands are self-calibrating: every scored forecast widens or narrows its metric's 10–90% band a
+little, so that about 80% of what actually happens ends up inside it.
 
 Accuracy: a snapshot of each forecast is kept until its horizon has passed, then scored against
 what actually happened (mean absolute error, a naive "nothing changes" baseline, and how often
@@ -50,6 +53,7 @@ SYSTEM_VARIATES = {  # column -> clip range of the forecast
     "gpu": (0.0, 1.0),
     "mem_pressure": (0.0, 1.0),
     "soc_temp": (0.0, 120.0),
+    "fan_rpm": (0.0, 10000.0),
     "sys_power": (0.0, None),
 }
 
@@ -153,10 +157,14 @@ def eta(series, threshold, below, step):
 def system_forecasts(conn, model, model_name, now) -> list[dict]:
     columns = list(SYSTEM_VARIATES) + ["on_ac"]
     matrix, end = load_matrix(conn, columns, SYSTEM_STEP, SYSTEM_CONTEXT, now)
-    targets, on_ac = matrix[:-1], matrix[-1:]
-    if valid_points(targets[0]) < SYSTEM_MIN_POINTS:
-        log(f"system: collecting data ({valid_points(targets[0])}/{SYSTEM_MIN_POINTS} points)")
+    # Forecast jointly only the variates with enough history: a metric added recently, or one this
+    # Mac doesn't have (fan speed on a fanless Mac), would otherwise be an all-missing variate.
+    active = [i for i, c in enumerate(SYSTEM_VARIATES) if valid_points(matrix[i]) >= SYSTEM_MIN_POINTS]
+    if not active:
+        log(f"system: collecting data ({valid_points(matrix[0])}/{SYSTEM_MIN_POINTS} points)")
         return []
+    names = [list(SYSTEM_VARIATES)[i] for i in active]
+    targets, on_ac = matrix[active], matrix[-1:]
 
     T = targets.shape[1]
     first_ts = end - T * SYSTEM_STEP
@@ -164,18 +172,21 @@ def system_forecasts(conn, model, model_name, now) -> list[dict]:
     t0 = time.perf_counter()
     fc = model.forecast(targets[None], prediction_length=SYSTEM_HORIZON,
                         past_covariates=on_ac[None], known_covariates=known[None])
-    log(f"system: {len(SYSTEM_VARIATES)} variates jointly, {SYSTEM_HORIZON} steps "
+    log(f"system: {len(names)} variates jointly, {SYSTEM_HORIZON} steps "
         f"in {(time.perf_counter() - t0) * 1000:.0f} ms")
 
+    calibration = meta_json(conn, "band_calibration")
     results = []
-    for v, (column, (lo, hi)) in enumerate(SYSTEM_VARIATES.items()):
+    for v, column in enumerate(names):
+        lo, hi = SYSTEM_VARIATES[column]
         series = targets[v]
-        if valid_points(series) < SYSTEM_MIN_POINTS:
-            continue  # e.g. a metric added recently
-        median, low, high = (np.clip(smooth(a), lo, hi) for a in quantiles(fc, v, float(np.nanmean(series))))
+        median, low, high = (smooth(a) for a in quantiles(fc, v, float(np.nanmean(series))))
+        scale = calibration.get(column, 1.0)
+        low, high = median - (median - low) * scale, median + (high - median) * scale
+        median, low, high = (np.clip(a, lo, hi) for a in (median, low, high))
         results.append(payload(column, now, end + SYSTEM_STEP, SYSTEM_STEP, median, low, high,
-                               valid_points(series), model_name,
-                               covariates=["jointly with " + ", ".join(c for c in SYSTEM_VARIATES if c != column),
+                               valid_points(series), model_name, band_scale=round(scale, 3),
+                               covariates=["jointly with " + ", ".join(c for c in names if c != column),
                                            "adapter state", "time of day"]))
     return results
 
@@ -359,7 +370,7 @@ def health_forecast(conn, model, model_name, now) -> dict | None:
 
 # MARK: - Accuracy
 
-SCORED_METRICS = {"cpu", "gpu", "mem_pressure", "soc_temp", "sys_power", "batt_pct"}
+SCORED_METRICS = {"cpu", "gpu", "mem_pressure", "soc_temp", "fan_rpm", "sys_power", "batt_pct"}
 SNAPSHOT_INTERVAL = 15 * 60          # keep one forecast per metric every 15 minutes for scoring
 ACCURACY_WINDOW = 7 * 86400          # the app shows the last 7 days
 SCORE_RETENTION = 90 * 86400
@@ -408,6 +419,19 @@ def actual_values(conn, column, start, step, count) -> np.ndarray:
     return values
 
 
+# Band calibration: each scored forecast nudges its metric's band width so that, over time, about
+# 80% of reality falls inside the 10–90% band (a simple online conformal-style correction).
+CALIBRATION_RATE = 0.3
+CALIBRATION_RANGE = (0.5, 5.0)
+
+
+def calibrate_band(conn, metric: str, coverage: float) -> None:
+    calibration = meta_json(conn, "band_calibration")
+    scale = calibration.get(metric, 1.0) * float(np.exp(CALIBRATION_RATE * ((HIGH_Q - LOW_Q) - coverage)))
+    calibration[metric] = float(np.clip(scale, *CALIBRATION_RANGE))
+    set_meta(conn, "band_calibration", json.dumps(calibration))
+
+
 def score_due_forecasts(conn, now) -> int:
     """Scores logged forecasts whose horizon has fully passed, then drops their snapshot."""
     scored = 0
@@ -437,6 +461,8 @@ def score_due_forecasts(conn, now) -> int:
         coverage = float(np.mean((low[valid] <= a) & (a <= high[valid])))
         conn.execute("INSERT OR REPLACE INTO forecast_scores VALUES (?, ?, ?, ?, ?, ?)",
                      (metric, generated_at, int(valid.sum()), mae, naive, coverage))
+        if metric in SYSTEM_VARIATES:
+            calibrate_band(conn, metric, coverage)
         scored += 1
     conn.execute("DELETE FROM forecast_scores WHERE generated_at < ?", (now - SCORE_RETENTION,))
     conn.execute("DELETE FROM forecast_log WHERE generated_at < ?", (now - 2 * 86400,))

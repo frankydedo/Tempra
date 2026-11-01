@@ -107,7 +107,8 @@ struct OverviewSection: View {
                          detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))",
                          state: monitor.health(.memory))
                 StatTile(title: "SoC temperature", systemImage: "thermometer.medium", value: s.socTemp.map(Metric.socTemp.format) ?? "—",
-                         detail: "Thermal state: \(s.thermalStateText)", state: monitor.health(.thermal))
+                         detail: [s.fanText, "thermal \(s.thermalStateText.lowercased())"].compactMap { $0 }.joined(separator: " · "),
+                         state: monitor.health(.thermal))
                 StatTile(title: "Battery", systemImage: "battery.75percent",
                          value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
                          detail: forecaster.batteryForecastText ?? s.batteryStateText,
@@ -161,7 +162,7 @@ struct ForecastsSection: View {
             if let battery = forecaster.currentBatteryForecast {
                 ForecastCard(metric: .batteryPercent, forecast: battery, headline: battery.batteryText)
             }
-            ForEach([(Metric.cpu, ForecastKey.cpu), (.gpu, ForecastKey.gpu), (.memPressure, ForecastKey.memoryPressure),
+            ForEach([(Metric.cpu, ForecastKey.cpu), (.gpu, ForecastKey.gpu), (.fanRPM, ForecastKey.fan), (.memPressure, ForecastKey.memoryPressure),
                      (.socTemp, ForecastKey.temperature), (.systemPower, ForecastKey.power)], id: \.1) { metric, key in
                 if let f = forecaster.forecasts[key] {
                     ForecastCard(metric: metric, forecast: f,
@@ -194,7 +195,8 @@ struct AccuracyTable: View {
 
     private let rows: [(key: String, metric: Metric)] = [
         (ForecastKey.battery, .batteryPercent), (ForecastKey.cpu, .cpu), (ForecastKey.gpu, .gpu),
-        (ForecastKey.memoryPressure, .memPressure), (ForecastKey.temperature, .socTemp), (ForecastKey.power, .systemPower),
+        (ForecastKey.memoryPressure, .memPressure), (ForecastKey.temperature, .socTemp), (ForecastKey.fan, .fanRPM),
+        (ForecastKey.power, .systemPower),
     ]
 
     var body: some View {
@@ -255,6 +257,10 @@ struct ForecastCard: View {
                 .font(.caption2).foregroundStyle(.secondary)
             if let covariates = forecast.covariates, !covariates.isEmpty {
                 Text("Conditioned on: " + covariates.joined(separator: " · "))
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            if let scale = forecast.bandScale, abs(scale - 1) >= 0.05 {
+                Text(String(format: "Band %@ ×%.1f to match past accuracy", scale > 1 ? "widened" : "narrowed", scale))
                     .font(.caption2).foregroundStyle(.secondary)
             }
         }

@@ -27,7 +27,7 @@ struct SummaryView: View {
                          state: monitor.health(.memory))
                 StatTile(title: "Temperature", systemImage: "thermometer.medium",
                          value: s.socTemp.map(Metric.socTemp.format) ?? "—",
-                         detail: s.socTempMax.map { "Hotspot \(Metric.socTemp.format($0)) · \(s.thermalStateText)" },
+                         detail: s.socTempMax.map { "Hotspot \(Metric.socTemp.format($0)) · \(s.fanText ?? s.thermalStateText)" },
                          color: Metric.socTemp.color, points: monitor.live[.socTemp] ?? [],
                          state: monitor.health(.thermal))
                 StatTile(title: "Battery", systemImage: s.battery.map(MenuBarDisplay.batterySymbol) ?? "battery.0percent", value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",

@@ -11,6 +11,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     case socTemp = "soc_temp"
     case socTempMax = "soc_temp_max"
     case batteryTemp = "batt_temp"
+    case fanRPM = "fan_rpm"
     case batteryPercent = "batt_pct"
     case batteryPower = "batt_power"
     case systemPower = "sys_power"
@@ -34,6 +35,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .socTemp: "SoC Temperature"
         case .socTempMax: "SoC Hotspot"
         case .batteryTemp: "Battery Temperature"
+        case .fanRPM: "Fan Speed"
         case .batteryPercent: "Battery Level"
         case .batteryPower: "Battery Power"
         case .systemPower: "System Power"
@@ -51,6 +53,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .cpu, .gpu, .memUsed, .memPressure, .swap: .fraction
         case .socTemp, .socTempMax, .batteryTemp: .celsius
+        case .fanRPM: .rpm
         case .batteryPercent: .percent
         case .batteryPower, .systemPower, .adapterWatts: .watts
         case .onAC, .charging: .fraction
@@ -64,6 +67,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .gpu: .indigo
         case .memUsed, .memPressure, .swap: .purple
         case .socTemp, .socTempMax, .batteryTemp: .orange
+        case .fanRPM: .cyan
         case .batteryPercent: .green
         case .batteryPower, .systemPower: .yellow
         case .onAC, .charging, .adapterWatts: .gray
@@ -91,6 +95,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
         case .socTemp: s.socTemp
         case .socTempMax: s.socTempMax
         case .batteryTemp: s.batteryTemp
+        case .fanRPM: s.fanRPM
         case .batteryPercent: s.battery?.percent
         case .batteryPower: s.battery?.batteryPower
         case .systemPower: s.battery?.systemPower
@@ -108,7 +113,19 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum MetricUnit: Sendable {
-    case fraction, percent, celsius, watts, bytesPerSecond
+    case fraction, percent, celsius, watts, bytesPerSecond, rpm
+
+    /// Smallest y-axis span for auto-scaled charts.
+    var minimumSpan: Double {
+        switch self {
+        case .fraction: 0.05
+        case .percent: 5
+        case .celsius: 5
+        case .watts: 2
+        case .bytesPerSecond: 10_000
+        case .rpm: 1000
+        }
+    }
 
     func format(_ v: Double) -> String {
         switch self {
@@ -117,6 +134,7 @@ enum MetricUnit: Sendable {
         case .celsius: String(format: "%.0f°C", v)
         case .watts: String(format: abs(v) < 10 ? "%.1f W" : "%.0f W", v)
         case .bytesPerSecond: Format.bytes(v) + "/s"
+        case .rpm: String(format: "%.0f rpm", max(v, 0))
         }
     }
 }

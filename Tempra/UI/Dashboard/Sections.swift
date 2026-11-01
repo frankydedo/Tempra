@@ -162,6 +162,24 @@ struct ThermalSection: View {
             Card(title: "SoC Temperature", systemImage: "thermometer.medium") {
                 HistoryChart(metric: .socTemp, range: range, forecast: forecaster.forecast(for: .socTemp), height: 220)
             }
+            Card(title: s.fans.count > 1 ? "Fans" : "Fan", systemImage: "fan") {
+                if s.fans.isEmpty {
+                    Text("This Mac has no fan: it is cooled passively, and slows down under sustained load instead.")
+                        .font(.callout).foregroundStyle(.secondary)
+                } else {
+                    HStack(spacing: 32) {
+                        ForEach(Array(s.fans.enumerated()), id: \.offset) { index, fan in
+                            BigStat(label: (s.fans.count > 1 ? "Fan \(index + 1) · " : "")
+                                        + String(format: "%.0f–%.0f rpm range", fan.minRPM, fan.maxRPM),
+                                    value: fan.isSpinning ? Metric.fanRPM.format(fan.rpm) : "Off",
+                                    color: Metric.fanRPM.color)
+                        }
+                    }
+                    HistoryChart(metric: .fanRPM, range: range, forecast: forecaster.forecast(for: .fanRPM), height: 160)
+                    Text("Apple silicon Macs stop the fan entirely at low load, so “Off” is normal.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
             HStack(spacing: 16) {
                 Card(title: "SoC Hotspot") { HistoryChart(metric: .socTempMax, range: range, height: 130) }
                 Card(title: "Battery Temperature") { HistoryChart(metric: .batteryTemp, range: range, height: 130) }

@@ -38,6 +38,8 @@ struct Forecast: Decodable, Sendable {
     let summary: Summary?
     /// What the forecast was conditioned on, e.g. other metrics forecast jointly.
     let covariates: [String]?
+    /// How much the worker widened (>1) or narrowed (<1) the band to match past accuracy.
+    let bandScale: Double?
 
     var generatedDate: Date { Date(timeIntervalSince1970: generatedAt) }
     var endDate: Date { Date(timeIntervalSince1970: start + step * Double(median.count - 1)) }
@@ -85,6 +87,7 @@ enum ForecastKey {
     static let gpu = "gpu"
     static let memoryPressure = "mem_pressure"
     static let temperature = "soc_temp"
+    static let fan = "fan_rpm"
     static let power = "sys_power"
     static let health = "health"
 
@@ -95,6 +98,7 @@ enum ForecastKey {
         case .gpu: gpu
         case .memPressure: memoryPressure
         case .socTemp: temperature
+        case .fanRPM: fan
         case .systemPower: power
         default: nil
         }
@@ -207,6 +211,14 @@ final class ForecastService {
             return
         }
         guard worker == nil else { return }
+        #if DEBUG
+        if UserDefaults.standard.string(forKey: "TempraSnapshotDir") != nil
+            && !UserDefaults.standard.bool(forKey: "TempraSnapshotForecaster") {
+            // Snapshot runs read the installed app's forecasts; a second worker would race it.
+            status = .running
+            return
+        }
+        #endif
 
         let model = UserDefaults.standard.string(forKey: SettingsKey.forecastModel) ?? ForecastModel.small.rawValue
         let process = Process()

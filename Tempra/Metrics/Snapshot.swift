@@ -38,6 +38,15 @@ struct Snapshot: Sendable {
     var batteryTemp: Double?
     var ssdTemp: Double?
     var thermalState: ProcessInfo.ThermalState = .nominal
+    /// One entry per fan; empty on fanless Macs.
+    var fans: [FanReading] = []
+
+    /// Average fan speed, nil on fanless Macs.
+    var fanRPM: Double? { fans.isEmpty ? nil : fans.map(\.rpm).reduce(0, +) / Double(fans.count) }
+    var fanText: String? {
+        guard let rpm = fanRPM else { return nil }
+        return rpm > 0 ? Metric.fanRPM.format(rpm) : "Fan off"
+    }
 
     // Battery & power
     var battery: BatteryInfo?

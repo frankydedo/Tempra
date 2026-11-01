@@ -6,6 +6,7 @@ actor Sampler {
     private let cpu = CPUReader()
     private let thermal = ThermalReader()
     private let io = IOReader()
+    private let fan = FanReader()
 
     func sample() -> Snapshot {
         var s = Snapshot()
@@ -45,6 +46,7 @@ actor Sampler {
         s.batteryTemp = t.battery
         s.ssdTemp = t.ssd
         s.thermalState = ProcessInfo.processInfo.thermalState
+        s.fans = fan.read()
 
         s.battery = BatteryReader.read()
 
@@ -87,7 +89,9 @@ final class SystemMonitor {
     private var loop: Task<Void, Never>?
     private var lastRollUp = Date.distantPast
     private var lastHealthRecord = Date.distantPast
-    private var lastHealth: [HealthMetric: HealthState] = [:]
+    /// Displayed health per metric, with hysteresis (see `updateHealth`).
+    private(set) var healthStates: [HealthMetric: HealthState] = [:]
+    private var calmerSince: [HealthMetric: Date] = [:]
 
     private init() {}
 
@@ -119,6 +123,7 @@ final class SystemMonitor {
         latest = snapshot
         hasSample = true
         appendLive(snapshot)
+        updateHealth(snapshot)
 
         await store.insert(snapshot)
         if snapshot.date.timeIntervalSince(lastRollUp) >= 60 {
@@ -158,13 +163,37 @@ final class SystemMonitor {
                 Log.notice(.battery, (after.isCharging ? "Charging started" : "Charging stopped") + String(format: " at %.0f%%", after.percent))
             }
         }
+    }
+
+    /// Updates the displayed health states. Getting worse shows immediately; getting better only
+    /// after the calmer state has held for `HealthRules.recoveryDelay`, so a metric hovering around
+    /// a threshold (memory pressure does) doesn't flicker between colours. Battery and power states
+    /// follow plug/unplug at once. Every displayed transition is logged, and so is any non-Normal
+    /// state at launch.
+    private func updateHealth(_ snapshot: Snapshot) {
         for metric in HealthMetric.allCases {
-            let state = new.health(metric, live: live)
-            if let previous = lastHealth[metric], previous != state {
-                let message = "\(metric): \(previous.label) → \(state.label) (\(new.healthDetail(metric, live: live)))"
-                state == .normal ? Log.info(.health, message) : Log.notice(.health, message)
+            let raw = snapshot.health(metric, live: live)
+            guard let shown = healthStates[metric] else {
+                healthStates[metric] = raw
+                if raw != .normal {
+                    Log.notice(.health, "\(metric): \(raw.label) at launch (\(snapshot.healthDetail(metric, live: live)))")
+                }
+                continue
             }
-            lastHealth[metric] = state
+            var next = shown
+            if raw >= shown || !HealthRules.hysteresis.contains(metric) {
+                next = raw
+                calmerSince[metric] = nil
+            } else if let since = calmerSince[metric] {
+                if snapshot.date.timeIntervalSince(since) >= HealthRules.recoveryDelay { next = raw }
+            } else {
+                calmerSince[metric] = snapshot.date
+            }
+            guard next != shown else { continue }
+            calmerSince[metric] = nil
+            healthStates[metric] = next
+            let message = "\(metric): \(shown.label) → \(next.label) (\(snapshot.healthDetail(metric, live: live)))"
+            next == .normal ? Log.info(.health, message) : Log.notice(.health, message)
         }
     }
 
