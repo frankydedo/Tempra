@@ -74,13 +74,22 @@ struct HistoryChart: View {
     var height: CGFloat = 180
 
     @State private var points: [ChartPoint] = []
-    @State private var pluggedIn: [PluggedSpan] = []
+    @State private var powerSpans: [PowerSpan] = []
     @State private var hover: Date?
     private let monitor = SystemMonitor.shared
 
-    /// A stretch of time spent on the power adapter, shaded on the battery chart.
-    struct PluggedSpan: Identifiable {
+    /// A stretch of time on the power adapter, shaded on the battery chart.
+    struct PowerSpan: Identifiable {
+        enum Kind: CaseIterable {
+            case charging, notCharging
+
+            var label: String { self == .charging ? "Charging" : "On adapter, not charging" }
+            var color: Color { self == .charging ? .blue : .yellow }
+            var opacity: Double { self == .charging ? 0.13 : 0.18 }
+        }
+
         var id: Date { start }
+        let kind: Kind
         let start: Date
         var end: Date
     }
@@ -88,11 +97,15 @@ struct HistoryChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             chart
-            if !pluggedIn.isEmpty {
-                Label {
-                    Text("On power adapter")
-                } icon: {
-                    RoundedRectangle(cornerRadius: 2).fill(Self.pluggedColor.opacity(0.35)).frame(width: 14, height: 9)
+            if !powerSpans.isEmpty {
+                HStack(spacing: 14) {
+                    ForEach(PowerSpan.Kind.allCases.filter { kind in powerSpans.contains { $0.kind == kind } }, id: \.self) { kind in
+                        Label {
+                            Text(kind.label)
+                        } icon: {
+                            RoundedRectangle(cornerRadius: 2).fill(kind.color.opacity(kind.opacity * 2.2)).frame(width: 14, height: 9)
+                        }
+                    }
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -100,16 +113,14 @@ struct HistoryChart: View {
         }
     }
 
-    private static let pluggedColor = Color.yellow
-
     private var chart: some View {
         let forecastPoints = visibleForecast
         let domain = metric.yDomain ?? autoDomain(forecastPoints)
         return Chart {
-            ForEach(pluggedIn) { span in
+            ForEach(powerSpans) { span in
                 RectangleMark(xStart: .value("From", span.start), xEnd: .value("To", span.end),
                               yStart: .value("Bottom", domain.lowerBound), yEnd: .value("Top", domain.upperBound))
-                    .foregroundStyle(Self.pluggedColor.opacity(0.16))
+                    .foregroundStyle(span.kind.color.opacity(span.kind.opacity))
             }
             ForEach(points) { point in
                 // Fill down to the axis minimum (not zero) so the area never spills below the plot.
@@ -201,20 +212,31 @@ struct HistoryChart: View {
         let from = to.addingTimeInterval(-range.seconds)
         points = await monitor.store.series(metric, from: from, to: to, bucket: range.bucket)
         if metric == .batteryPercent {
-            let adapter = await monitor.store.series(.onAC, from: from, to: to, bucket: range.bucket)
-            pluggedIn = Self.spans(adapter, bucket: range.bucket)
+            let store = monitor.store
+            async let adapter = store.series(.onAC, from: from, to: to, bucket: range.bucket)
+            async let charging = store.series(.charging, from: from, to: to, bucket: range.bucket)
+            async let batteryPower = store.series(.batteryPower, from: from, to: to, bucket: range.bucket)
+            powerSpans = Self.spans(adapter: await adapter, charging: await charging,
+                                    batteryPower: await batteryPower, bucket: range.bucket)
         }
     }
 
-    /// Merges buckets where the Mac was mostly on the adapter into continuous spans.
-    private static func spans(_ adapter: [ChartPoint], bucket: TimeInterval) -> [PluggedSpan] {
-        var spans: [PluggedSpan] = []
+    /// Merges buckets where the Mac was mostly on the adapter into continuous spans, split by
+    /// whether the battery was charging. History recorded before the charging state was stored
+    /// falls back to the battery's power flow (charging = energy going in).
+    private static func spans(adapter: [ChartPoint], charging: [ChartPoint], batteryPower: [ChartPoint],
+                              bucket: TimeInterval) -> [PowerSpan] {
+        let chargingByDate = Dictionary(charging.map { ($0.date, $0.value) }, uniquingKeysWith: { a, _ in a })
+        let powerByDate = Dictionary(batteryPower.map { ($0.date, $0.value) }, uniquingKeysWith: { a, _ in a })
+        var spans: [PowerSpan] = []
         for point in adapter where point.value >= 0.5 {
+            let isCharging = chargingByDate[point.date].map { $0 >= 0.5 } ?? ((powerByDate[point.date] ?? 0) > 0.5)
+            let kind: PowerSpan.Kind = isCharging ? .charging : .notCharging
             let end = point.date.addingTimeInterval(bucket)
-            if let last = spans.last, point.date.timeIntervalSince(last.end) <= bucket * 1.5 {
+            if let last = spans.last, last.kind == kind, point.date.timeIntervalSince(last.end) <= bucket * 1.5 {
                 spans[spans.count - 1].end = end
             } else {
-                spans.append(PluggedSpan(start: point.date, end: end))
+                spans.append(PowerSpan(kind: kind, start: point.date, end: end))
             }
         }
         return spans
