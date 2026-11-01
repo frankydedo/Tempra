@@ -97,7 +97,8 @@ struct OverviewSection: View {
     var body: some View {
         let s = monitor.latest
         VStack(alignment: .leading, spacing: 16) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+            // Nine tiles in a 3 × 3 grid: compute, thermals and power, then battery and I/O.
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                 StatTile(title: "CPU", systemImage: "cpu", value: Metric.cpu.format(s.cpuTotal),
                          detail: String(format: "Load %.2f · %.2f · %.2f", s.loadAverage.0, s.loadAverage.1, s.loadAverage.2),
                          state: monitor.health(.cpu))
@@ -107,14 +108,14 @@ struct OverviewSection: View {
                          detail: "\(Format.bytes(s.memUsed)) used · swap \(Format.bytes(s.swapUsed))",
                          state: monitor.health(.memory))
                 StatTile(title: "SoC temperature", systemImage: "thermometer.medium", value: s.socTemp.map(Metric.socTemp.format) ?? "—",
-                         detail: [s.fanText, "thermal \(s.thermalStateText.lowercased())"].compactMap { $0 }.joined(separator: " · "),
-                         state: monitor.health(.thermal))
+                         detail: "Thermal state: \(s.thermalStateText)", state: monitor.health(.thermal))
+                fanTile(s)
+                StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
+                         detail: "Whole system", state: monitor.health(.power))
                 StatTile(title: "Battery", systemImage: "battery.75percent",
                          value: s.battery.map { Metric.batteryPercent.format($0.percent) } ?? "—",
                          detail: forecaster.batteryForecastText ?? s.batteryStateText,
                          state: monitor.health(.battery))
-                StatTile(title: "Power", systemImage: "bolt.fill", value: s.battery?.systemPower.map(Metric.systemPower.format) ?? "—",
-                         detail: "Whole system", state: monitor.health(.power))
                 StatTile(title: "Network", systemImage: "network", value: "↓ " + Metric.netIn.format(s.netIn),
                          detail: "↑ " + Metric.netOut.format(s.netOut))
                 StatTile(title: "Startup disk", systemImage: "internaldrive", value: Format.bytes(Double(s.diskFree)),
@@ -130,6 +131,22 @@ struct OverviewSection: View {
                     }
                 }
             }
+        }
+    }
+}
+
+extension OverviewSection {
+    /// Fan speed, or a note on fanless Macs so the grid keeps its nine tiles.
+    @ViewBuilder
+    private func fanTile(_ s: Snapshot) -> some View {
+        if let fan = s.fans.first {
+            let rpm = s.fanRPM ?? 0
+            StatTile(title: s.fans.count > 1 ? "Fans" : "Fan", systemImage: "fan",
+                     value: rpm > 0 ? Metric.fanRPM.format(rpm) : "Off",
+                     detail: rpm > 0 ? String(format: "%.0f%% of max %.0f rpm", fan.maxRPM > 0 ? rpm / fan.maxRPM * 100 : 0, fan.maxRPM)
+                                     : String(format: "Spins up from %.0f rpm when needed", fan.minRPM))
+        } else {
+            StatTile(title: "Fan", systemImage: "fan", value: "None", detail: "Passively cooled")
         }
     }
 }

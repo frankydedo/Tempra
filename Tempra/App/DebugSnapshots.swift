@@ -1,7 +1,8 @@
 #if DEBUG
 import SwiftUI
 
-/// Debug-only: `Tempra -TempraSnapshotDir /path` renders the main views into PNG files
+/// Debug-only: `Tempra -TempraSnapshotDir /path [-TempraSnapshotRange 6h] [-TempraSnapshotAppearance dark]`
+/// renders the main views into PNG files
 /// (using the app's own windows, so no screen-recording permission is needed) and quits.
 @MainActor
 enum DebugSnapshots {
@@ -53,6 +54,10 @@ enum DebugSnapshots {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: width, height: height ?? max(size.height, 200)),
                               styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = hosting
+        // Light by default so renders are readable on any background; -TempraSnapshotAppearance dark for dark mode.
+        window.appearance = NSAppearance(named: UserDefaults.standard.string(forKey: "TempraSnapshotAppearance") == "dark"
+                                         ? .darkAqua : .aqua)
+        window.backgroundColor = .windowBackgroundColor
         window.setFrameOrigin(NSPoint(x: -3000, y: 0))
         window.orderFrontRegardless()
         return window
