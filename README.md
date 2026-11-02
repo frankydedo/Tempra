@@ -167,9 +167,9 @@ Depending on the state, Tempra shows:
 
 | State | Shown as |
 |---|---|
-| On battery | "Empty in ~2h 10m (1h 50m–2h 40m)" |
-| Charging | "Full in ~45m (40m–50m)", plus how long it would last if you unplugged now |
-| On adapter, not charging (e.g. held at the charge limit) | "Held at 80% · ~6h 10m on battery" |
+| On battery | "Battery until ~18:40 (17:50–19:30)" |
+| Charging | "Full at ~11:25 (11:15–11:40)", plus until when it would last if you unplugged now |
+| On adapter, not charging (e.g. held at the charge limit) | "Held at 80% · on battery until ~22:30" |
 
 **While charging**, the battery level follows the same idea: the power going into the battery is the
 smaller of what the battery accepts at its current level (constant current up to ~80%, then tapering) and what
@@ -256,7 +256,7 @@ history from **Settings → Data**.
 
 **Forecasting**
 - [x] Multivariate forecasts with covariates (adapter state, time of day) and a physics-based battery model
-- [ ] **Clock-time forecasts**: "battery until ~18:40", "full at ~11:25", and "will it last until 19:00?" answered with a probability from the forecast bands
+- [x] **Clock-time forecasts**: "battery until ~18:40", "full at ~11:25", and "will it last until 19:00?" answered with a chance from the forecast bands
 - [ ] **Battery report**: daily and weekly time on battery, real runtime per full charge, charging habits (e.g. hours spent at 100%) with battery-health tips
 - [ ] Startup disk forecast: when the disk will be full at the current rate
 - [ ] Run Timestral natively through Core ML on the Neural Engine, removing the Python dependency

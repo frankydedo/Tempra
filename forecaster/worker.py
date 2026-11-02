@@ -6,10 +6,11 @@ where the app picks them up.
 
 Forecasts are multivariate:
   * System block (1-minute steps, 14 days of context, next hour): CPU, GPU, memory pressure, SoC temperature,
-    fan speed and system power are forecast jointly as variates of one series, so the model can use how they
+    fan speed and system power are forecast jointly; the fan's on/off state then follows the jointly
+    forecast temperature and the switch-on/off temperatures learned from this Mac's history, as variates of one series, so the model can use how they
     move together. Whether the Mac is on its adapter is a past covariate; time of day is a
     known-future covariate.
-  * Battery block (5-minute steps, 30 days of context, next 12 hours): Timestral forecasts system power together
+  * Battery block (5-minute steps, 30 days of context, next 24 hours): Timestral forecasts system power together
     with CPU and GPU load under an explicit power-source scenario (known-future covariate).
     Battery level is then derived from that power and the battery's energy (mAh × V), which
     stays physically consistent even before the history contains many discharges. While
@@ -57,8 +58,9 @@ SYSTEM_VARIATES = {  # column -> clip range of the forecast
     "sys_power": (0.0, None),
 }
 
-# Battery block: 5-minute resolution, 30 days of context (all minute history), 12 hours ahead.
-BATTERY_STEP, BATTERY_CONTEXT, BATTERY_HORIZON, BATTERY_MIN_POINTS = 300, 30 * 288, 144, 24
+# Battery block: 5-minute resolution, 30 days of context (all minute history), 24 hours ahead
+# (light use on a full battery easily lasts more than 12 hours).
+BATTERY_STEP, BATTERY_CONTEXT, BATTERY_HORIZON, BATTERY_MIN_POINTS = 300, 30 * 288, 288, 24
 EMPTY_PCT, FULL_PCT = 3.0, 99.0
 
 
@@ -176,19 +178,69 @@ def system_forecasts(conn, model, model_name, now) -> list[dict]:
         f"in {(time.perf_counter() - t0) * 1000:.0f} ms")
 
     calibration = meta_json(conn, "band_calibration")
+    paths = {}
+    for v, column in enumerate(names):
+        median, low, high = (smooth(a) for a in quantiles(fc, v, float(np.nanmean(targets[v]))))
+        scale = calibration.get(column, 1.0)
+        paths[column] = (median, median - (median - low) * scale, median + (high - median) * scale, scale)
+
+    # Fan speed is still forecast jointly with the rest; its on/off state then follows the jointly
+    # forecast SoC temperature and the thresholds this Mac's fan actually uses.
+    fan_note = None
+    if "fan_rpm" in paths and "soc_temp" in paths:
+        thresholds = fan_thresholds(conn, now)
+        if thresholds:
+            on_at, off_at = thresholds
+            fan_on = (targets[names.index("fan_rpm")][~np.isnan(targets[names.index("fan_rpm")])][-1:] > 0).any()
+            temp_median, temp_low, temp_high, _ = paths["soc_temp"]
+            fan_median, fan_low, fan_high, fan_scale = paths["fan_rpm"]
+            paths["fan_rpm"] = (fan_hurdle(fan_median, temp_median, fan_on, on_at, off_at),
+                                fan_hurdle(fan_low, temp_low, fan_on, on_at, off_at),
+                                fan_hurdle(fan_high, temp_high, fan_on, on_at, off_at), fan_scale)
+            fan_note = f"on above ~{on_at:.0f}°C, off below ~{off_at:.0f}°C (learned)"
+
     results = []
     for v, column in enumerate(names):
         lo, hi = SYSTEM_VARIATES[column]
-        series = targets[v]
-        median, low, high = (smooth(a) for a in quantiles(fc, v, float(np.nanmean(series))))
-        scale = calibration.get(column, 1.0)
-        low, high = median - (median - low) * scale, median + (high - median) * scale
+        median, low, high, scale = paths[column]
         median, low, high = (np.clip(a, lo, hi) for a in (median, low, high))
+        covariates = ["jointly with " + ", ".join(c for c in names if c != column), "adapter state", "time of day"]
+        if column == "fan_rpm" and fan_note:
+            covariates.append(fan_note)
         results.append(payload(column, now, end + SYSTEM_STEP, SYSTEM_STEP, median, low, high,
-                               valid_points(series), model_name, band_scale=round(scale, 3),
-                               covariates=["jointly with " + ", ".join(c for c in names if c != column),
-                                           "adapter state", "time of day"]))
+                               valid_points(targets[v]), model_name, band_scale=round(scale, 3),
+                               covariates=covariates))
     return results
+
+
+FAN_MIN_EVENTS = 2
+
+
+def fan_thresholds(conn, now) -> tuple[float, float] | None:
+    """SoC temperatures (minute averages) at which this Mac's fan has turned on and off in the last
+    30 days. None until each has been seen at least FAN_MIN_EVENTS times."""
+    rows = conn.execute(
+        "WITH m AS (SELECT ts, fan_rpm AS f, soc_temp AS t, LAG(fan_rpm) OVER (ORDER BY ts) AS pf, "
+        "LAG(ts) OVER (ORDER BY ts) AS pts FROM minute WHERE fan_rpm IS NOT NULL AND soc_temp IS NOT NULL "
+        "AND ts >= ? AND ts < ?) "
+        "SELECT pf = 0 AND f > 0, t FROM m WHERE ts - pts <= 120 AND ((pf = 0 AND f > 0) OR (pf > 0 AND f = 0))",
+        (now - 30 * 86400, now)).fetchall()
+    on = [t for turned_on, t in rows if turned_on]
+    off = [t for turned_on, t in rows if not turned_on]
+    if len(on) < FAN_MIN_EVENTS or len(off) < FAN_MIN_EVENTS:
+        return None
+    # The lower quartile of switch-on temperatures: the fan has come on at that point before.
+    return float(np.percentile(on, 25)), float(np.median(off))
+
+
+def fan_hurdle(rpm: np.ndarray, temperature: np.ndarray, on: bool, on_at: float, off_at: float) -> np.ndarray:
+    """Fan speed path: 0 while the fan is off, the joint forecast's speed while it's on, switching
+    with hysteresis on the forecast temperature (the fan starts above on_at, stops below off_at)."""
+    out = np.zeros_like(rpm)
+    for i, (speed, temp) in enumerate(zip(rpm, temperature)):
+        on = temp > off_at if on else temp >= on_at
+        out[i] = max(speed, 0.0) if on else 0.0
+    return out
 
 
 # MARK: - Battery block
@@ -432,29 +484,58 @@ def calibrate_band(conn, metric: str, coverage: float) -> None:
     set_meta(conn, "band_calibration", json.dumps(calibration))
 
 
+BATTERY_MIN_SCORED_STEPS = 6   # 30 minutes
+
+
+def battery_valid_steps(conn, generated_at, start, step, n, now) -> int | None:
+    """How many leading steps of a battery forecast can be scored, or None to wait.
+
+    A battery forecast assumes the Mac stays awake and on the same power source. It is scored as
+    soon as that stops being true (adapter plugged/unplugged, or a gap such as sleep) or its whole
+    horizon has passed, over the steps until then. Waiting for 24 unbroken hours would mean almost
+    no battery forecast ever gets scored."""
+    elapsed = min(n, int((now - 60 - start) // step))
+    if elapsed <= 0:
+        return None
+    level = actual_values(conn, "batt_pct", start, step, elapsed)
+    adapter = actual_values(conn, "on_ac", start, step, elapsed)
+    # The power source when the forecast was made: the minute it was generated in.
+    row = conn.execute("SELECT on_ac FROM minute WHERE ts <= ? AND on_ac IS NOT NULL ORDER BY ts DESC LIMIT 1",
+                       (generated_at,)).fetchone()
+    if row is None:
+        return 0
+    state = round(row[0])
+    # Any bucket that isn't entirely on the same power source ends the forecast's validity.
+    broken = np.isnan(level) | np.isnan(adapter) | (np.abs(np.nan_to_num(adapter, nan=-1) - state) > 0.05)
+    hits = np.flatnonzero(broken)
+    if hits.size:
+        return int(hits[0])
+    return elapsed if elapsed == n else None
+
+
 def score_due_forecasts(conn, now) -> int:
-    """Scores logged forecasts whose horizon has fully passed, then drops their snapshot."""
+    """Scores logged forecasts that have played out, then drops their snapshot."""
     scored = 0
     for metric, generated_at, start, step, median, low, high in conn.execute(
             "SELECT metric, generated_at, start, step, median, low, high FROM forecast_log").fetchall():
         median, low, high = (np.array(json.loads(a)) for a in (median, low, high))
         n = len(median)
-        if start + n * step > now - 60:  # wait for the last minute to be rolled up
-            continue
+        if metric == "batt_pct":
+            usable = battery_valid_steps(conn, generated_at, start, step, n, now)
+            if usable is None:
+                continue
+            minimum = BATTERY_MIN_SCORED_STEPS
+        else:
+            if start + n * step > now - 60:  # wait for the last minute to be rolled up
+                continue
+            usable, minimum = n, max(3, n // 2)
         actual = actual_values(conn, metric, start, step, n)
         anchor = actual_values(conn, metric, start - step, step, 1)[0]
         valid = ~np.isnan(actual)
-        if metric == "batt_pct":
-            # Battery forecasts assume the adapter state at forecast time; score only until it changes.
-            adapter = actual_values(conn, "on_ac", start - step, step, n + 1)
-            known = adapter[~np.isnan(adapter)]
-            if known.size:
-                state = np.round(known[0])
-                changed = np.cumsum(np.nan_to_num(np.abs(np.round(adapter[1:]) - state), nan=0) > 0) > 0
-                valid &= ~changed
+        valid[usable:] = False
         conn.execute("DELETE FROM forecast_log WHERE metric = ? AND generated_at = ?", (metric, generated_at))
-        if valid.sum() < max(3, n // 2):
-            continue  # Tempra wasn't running for most of the horizon
+        if valid.sum() < minimum:
+            continue  # Tempra wasn't running for long enough
         a = actual[valid]
         mae = float(np.mean(np.abs(median[valid] - a)))
         naive = None if np.isnan(anchor) else float(np.mean(np.abs(anchor - a)))

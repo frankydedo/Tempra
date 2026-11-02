@@ -147,6 +147,8 @@ final class ForecastService {
     private(set) var installLog = ""
 
     private var worker: Process?
+    /// When the current worker was launched; "Running" only once it has produced a forecast since.
+    private var workerStartedAt = Date.distantFuture
     private var installer: Process?
     private var pollTask: Task<Void, Never>?
     private let store: HistoryStore
@@ -254,6 +256,7 @@ final class ForecastService {
         do {
             try process.run()
             worker = process
+            workerStartedAt = Date()
             status = .starting
             Log.notice(.forecast, "Forecaster started (pid \(process.processIdentifier), \(model)); output in \(Self.logURL.path)")
         } catch {
@@ -334,11 +337,11 @@ final class ForecastService {
 
         if let value = await store.meta("forecaster_last_run"), let t = Double(value) {
             lastRun = Date(timeIntervalSince1970: t)
-            if worker != nil, status == .starting { status = .running }
+            if worker != nil, status == .starting, t >= workerStartedAt.timeIntervalSince1970 { status = .running }
         }
         if worker != nil, let error = await store.meta("forecaster_error"), !error.isEmpty {
             status = .failed(error)
-        } else if worker != nil, case .failed = status {
+        } else if worker != nil, case .failed = status, (lastRun ?? .distantPast) >= workerStartedAt {
             status = .running
         }
     }

@@ -180,4 +180,26 @@ enum Format {
     }
 
     static func duration(seconds: Double) -> String { duration(minutes: seconds / 60) }
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
+
+    /// A time of day: "18:40", "tomorrow 02:10", or "Wed 09:00". `short` drops the day for times
+    /// inside a range whose start already names it.
+    static func clock(_ date: Date, short: Bool = false) -> String {
+        let time = timeFormatter.string(from: date)
+        let calendar = Calendar.current
+        if short || calendar.isDateInToday(date) { return time }
+        if calendar.isDateInTomorrow(date) { return "tomorrow \(time)" }
+        return date.formatted(.dateTime.weekday(.abbreviated)) + " " + time
+    }
+
+    /// The clock time `minutes` from now, e.g. macOS's time-remaining estimates.
+    static func clock(inMinutes minutes: Int) -> String {
+        clock(Date().addingTimeInterval(Double(minutes) * 60))
+    }
 }

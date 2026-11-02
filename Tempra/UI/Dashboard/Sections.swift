@@ -196,6 +196,52 @@ struct ThermalSection: View {
 
 // MARK: - Battery & Power
 
+/// "Will it last until 19:00?" with a chance from the forecast bands. The time is remembered.
+private struct LastsUntilRow: View {
+    let forecast: Forecast
+    let onAdapter: Bool
+    @AppStorage("lastsUntilMinutes") private var minutes = 19 * 60
+
+    private var target: Date {
+        let calendar = Calendar.current
+        let today = calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
+        return today > Date() ? today : calendar.date(byAdding: .day, value: 1, to: today) ?? today
+    }
+
+    private var time: Binding<Date> {
+        Binding(get: { target }, set: { date in
+            let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+            minutes = (parts.hour ?? 19) * 60 + (parts.minute ?? 0)
+        })
+    }
+
+    var body: some View {
+        HStack {
+            Text(onAdapter ? "Unplugged now, would it last until" : "Will it last until").foregroundStyle(.secondary)
+            DatePicker("", selection: time, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .fixedSize()
+            Spacer()
+            if let chance = forecast.chanceOfLasting(until: target) {
+                Text(Self.verdict(chance))
+                    .monospacedDigit()
+                    .foregroundStyle(chance >= 0.75 ? .green : chance >= 0.25 ? .orange : .red)
+            }
+        }
+        .font(.callout)
+    }
+
+    static func verdict(_ chance: Double) -> String {
+        switch chance {
+        case 0.9...: "Very likely (≥90%)"
+        case 0.6..<0.9: String(format: "Likely (%.0f%%)", chance * 100)
+        case 0.4..<0.6: String(format: "Uncertain (%.0f%%)", chance * 100)
+        case 0.1..<0.4: String(format: "Unlikely (%.0f%%)", chance * 100)
+        default: "Very unlikely (≤10%)"
+        }
+    }
+}
+
 struct BatterySection: View {
     let range: TimeRange
     private let monitor = SystemMonitor.shared
@@ -225,6 +271,9 @@ struct BatterySection: View {
                         if let unplugged = forecaster.currentBatteryForecast?.unpluggedText,
                            forecaster.currentBatteryForecast?.summary?.kind == "time_to_full" {
                             InfoRow(label: "If unplugged now", value: unplugged)
+                        }
+                        if let forecast = forecaster.currentBatteryForecast {
+                            LastsUntilRow(forecast: forecast, onAdapter: b.onAC)
                         }
                     }
                     Card(title: "Details", systemImage: "info.circle") {
@@ -261,9 +310,9 @@ struct BatterySection: View {
     }
 
     private func macOSEstimate(_ b: BatteryInfo) -> String {
-        if b.isCharging { return b.minutesToFull.map { "Full in \(Format.duration(minutes: Double($0)))" } ?? "Calculating…" }
+        if b.isCharging { return b.minutesToFull.map { "Full at ~\(Format.clock(inMinutes: $0))" } ?? "Calculating…" }
         if b.onAC { return "On power adapter" }
-        return b.minutesToEmpty.map { "\(Format.duration(minutes: Double($0))) left" } ?? "Calculating…"
+        return b.minutesToEmpty.map { "Until ~\(Format.clock(inMinutes: $0))" } ?? "Calculating…"
     }
 }
 

@@ -178,8 +178,8 @@ struct SummaryView: View {
 
     private func batteryDetail(_ s: Snapshot) -> String {
         guard let b = s.battery else { return "No battery" }
-        if b.isCharging, let m = b.minutesToFull { return "Charging · full in \(Format.duration(minutes: Double(m)))" }
-        if !b.onAC, let m = b.minutesToEmpty { return "\(Format.duration(minutes: Double(m))) left (macOS)" }
+        if b.isCharging, let m = b.minutesToFull { return "Charging · full at ~\(Format.clock(inMinutes: m))" }
+        if !b.onAC, let m = b.minutesToEmpty { return "Until ~\(Format.clock(inMinutes: m)) (macOS)" }
         return s.batteryStateText
     }
 

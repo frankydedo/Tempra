@@ -193,37 +193,61 @@ extension Snapshot {
 }
 
 extension Forecast {
-    /// Human readable battery prediction, e.g. "Empty in ~2h 10m (1h 50m–2h 40m)".
+    /// When the forecast's clock starts: ETAs in the summary count from here.
+    private var origin: Date { Date(timeIntervalSince1970: start - step) }
+
+    /// Human readable battery prediction as clock times, e.g. "Battery until ~18:40 (17:50–19:30)".
     var batteryText: String? {
         guard let s = summary else { return nil }
         switch s.kind {
         case "held":
             let level = s.percent.map { String(format: "Held at %.0f%%", $0) } ?? "On adapter"
-            guard let unplugged = s.ifUnplugged.flatMap({ Self.etaText($0, horizon: s.horizon) }) else { return level }
-            return "\(level) · \(unplugged) on battery"
+            guard let unplugged = s.ifUnplugged.flatMap({ clockText($0, horizon: s.horizon) }) else { return level }
+            return "\(level) · on battery until \(unplugged)"
         case "time_to_full":
-            return Self.etaText(s.eta, horizon: s.horizon).map { "Full in \($0)" }
+            return clockText(s.eta, horizon: s.horizon).map { "Full at \($0)" }
         default:
-            return Self.etaText(s.eta, horizon: s.horizon).map { "Empty in \($0)" }
+            return clockText(s.eta, horizon: s.horizon).map { "Battery until \($0)" }
         }
     }
 
-    /// Battery life if unplugged now, shown while charging or on the adapter.
+    /// How long the battery would last if unplugged now, shown while charging.
     var unpluggedText: String? {
         guard let s = summary, s.kind != "time_to_empty", let eta = s.ifUnplugged else { return nil }
-        return Self.etaText(eta, horizon: s.horizon).map { "\($0) if unplugged now" }
+        return clockText(eta, horizon: s.horizon).map { "Until \($0)" }
     }
 
-    /// "~2h 10m (1h 50m–2h 40m)", "~2h 10m (at least 1h 50m)" or "more than 12h".
-    private static func etaText(_ eta: ETA, horizon: Double?) -> String? {
-        guard let seconds = eta.seconds else {
-            return horizon.map { "more than \(Format.duration(seconds: $0))" }
+    /// The battery-life estimate that applies now: on battery, or if unplugged now.
+    private var runtime: ETA? {
+        guard let s = summary else { return nil }
+        return s.kind == "time_to_empty" ? s.eta : s.ifUnplugged
+    }
+
+    /// Chance (0–1) that the battery still has charge at `date`, from the forecast's 10th, 50th and
+    /// 90th percentile run-out times (linearly between them, capped at 5% and 95%).
+    func chanceOfLasting(until date: Date) -> Double? {
+        guard let eta = runtime, let median = eta.seconds ?? summary?.horizon else { return nil }
+        let needed = date.timeIntervalSince(origin)
+        let early = eta.low ?? median * 0.8
+        let late = eta.high ?? summary?.horizon ?? median * 1.2
+        switch needed {
+        case ..<early: return 0.95
+        case ..<median: return 0.9 - 0.4 * (needed - early) / max(median - early, 1)
+        case ..<late: return 0.5 - 0.4 * (needed - median) / max(late - median, 1)
+        default: return eta.seconds == nil && eta.high == nil ? 0.5 : 0.05
         }
-        var text = "~\(Format.duration(seconds: seconds))"
+    }
+
+    /// "~18:40 (17:50–19:30)", "~18:40 (not before 17:50)" or "after tomorrow 10:15".
+    private func clockText(_ eta: ETA, horizon: Double?) -> String? {
+        guard let seconds = eta.seconds else {
+            return horizon.map { "after \(Format.clock(origin.addingTimeInterval($0)))" }
+        }
+        var text = "~" + Format.clock(origin.addingTimeInterval(seconds))
         if let low = eta.low, let high = eta.high, high > low {
-            text += " (\(Format.duration(seconds: low))–\(Format.duration(seconds: high)))"
+            text += " (\(Format.clock(origin.addingTimeInterval(low), short: true))–\(Format.clock(origin.addingTimeInterval(high), short: true)))"
         } else if let low = eta.low, low < seconds {
-            text += " (at least \(Format.duration(seconds: low)))"
+            text += " (not before \(Format.clock(origin.addingTimeInterval(low), short: true)))"
         }
         return text
     }
