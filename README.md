@@ -33,7 +33,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 🚦 **Health at a glance** | Every key metric is Normal, Warning or Critical, using macOS's own signals where they exist. Warning values turn orange, Critical red, in the panel, the dashboard and the menu bar. |
 | 🪟 **Glanceable summary** | Click the icon for a compact panel with the essentials, sparklines and the latest forecasts. |
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
-| 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 6-month battery health projection. |
+| 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 3-year battery health projection whose range narrows as history grows. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
 | 🪶 **Lightweight** | Native Swift, no daemon with root privileges. Charts only redraw while on screen, so Tempra uses about 1–2% of one core in the background; the forecaster a few milliseconds per minute. |
 | 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
@@ -158,7 +158,7 @@ battery. Tempra's forecasts use those links instead of predicting each metric on
 |---|---|---|---|
 | **System** | 1 min · 14 days · 1 h | CPU, GPU, memory pressure, SoC temperature, fan speed and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
 | **Battery** | 5 min · 30 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
-| **Battery health** | 1 day · all · 180 days | Maximum capacity | — |
+| **Battery health** | 1 week · all · 3 years | Maximum capacity | Capacity lost per charge cycle and cycles per day (see below) |
 
 **Battery level** comes from a hybrid model: Timestral forecasts the power the Mac will draw, and Tempra
 converts it into battery percentage using the battery's actual energy (mAh × V). This stays physically
@@ -182,6 +182,20 @@ itself (USB-C Power Delivery or MagSafe).
 The battery chart shades charging periods in green and time on the adapter without charging (for example
 held at 80% by optimized charging) in yellow.
 
+### Battery health over three years
+
+Battery wear is slow (a few tenths of a percent a month) and long-term, so instead of a time-series model
+Tempra projects it from two rates:
+
+> capacity in *t* days = capacity now − capacity lost per cycle × cycles per day × *t*
+
+Both start as wide estimates — capacity lost per cycle from the battery's lifetime average (capacity lost so
+far ÷ cycles so far), cycles per day from a vague prior — and are refined with this Mac's own history (the
+trend of capacity against cycle count, and the cycles actually used each day). The 10–90% range comes from
+sampling both rates, so it is **wide on day one and narrows as days and cycles accumulate**: in a simulation,
+from about 34 points of range after two days to 5 after six months and under 4 after a year. Tempra shows the
+expected capacity in three years and when it should reach 80%, the level below which Apple recommends service.
+
 ### Do forecasts get better over time?
 
 Yes, up to a point. Timestral is zero-shot: its weights never change and it is not trained on your data.
@@ -204,8 +218,8 @@ time about 80% of what actually happens falls inside it.
 Battery forecasts are scored only while the adapter state stays the same as when they were made, and the
 "held at the charge limit" state is not scored, since it isn't a real prediction.
 
-Forecasts appear after about an hour of history (two hours for battery, two weeks of daily samples for
-battery health) and refresh every minute. On an M4 a full refresh takes under a second of CPU time. You can switch between **Timestral 5M** and **28M** in Settings.
+Forecasts appear after about an hour of history (two hours for battery; the battery health projection from
+the first day) and refresh every minute. On an M4 a full refresh takes under a second of CPU time. You can switch between **Timestral 5M** and **28M** in Settings.
 
 ## Architecture
 

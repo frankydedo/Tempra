@@ -402,22 +402,82 @@ def charge_forecast(conn, state, system_power, energy_wh, now) -> dict:
 
 # MARK: - Battery health
 
+HEALTH_YEARS = 3
+HEALTH_STEP = 7 * 86400                 # weekly points
+PRIOR_CYCLES_PER_DAY = (0.4, 0.3)       # mean, sd: typical laptop use, deliberately vague
+PRIOR_LOSS_SD_SHARE = 0.5               # loss per cycle known to within ±50% before any trend is seen
+MIN_CYCLE_SPAN_FOR_TREND = 10
+
+
+def precision_mean(prior: tuple[float, float], observed: tuple[float, float] | None) -> tuple[float, float]:
+    """Combine two normal estimates (mean, sd) by precision weighting."""
+    if observed is None or observed[1] <= 0:
+        return prior
+    w0, w1 = 1 / prior[1] ** 2, 1 / observed[1] ** 2
+    return (prior[0] * w0 + observed[0] * w1) / (w0 + w1), (w0 + w1) ** -0.5
+
+
 def health_forecast(conn, model, model_name, now) -> dict | None:
-    rows = conn.execute("SELECT day, health FROM battery_daily ORDER BY day").fetchall()
-    if len(rows) < 14:
+    """Battery maximum capacity over the next three years.
+
+    capacity(t) = capacity now − loss per cycle × cycles per day × days
+    Both rates start as wide guesses and are refined by this Mac's history, so the band is wide at
+    first and narrows as days and charge cycles accumulate:
+      * loss per cycle: starts from the battery's lifetime average (capacity lost / cycles so far,
+        which also folds in calendar ageing) ±50%, then the observed trend of capacity against
+        cycle count, weighted by its standard error;
+      * cycles per day: a vague prior updated with the rate observed so far.
+    The 10–90% band comes from sampling both rates."""
+    rows = conn.execute("SELECT day, health, cycle_count FROM battery_daily WHERE health > 0 ORDER BY day").fetchall()
+    if not rows:
         return None
-    days = np.array([r[0] for r in rows])
-    first, last = days[0], days[-1]
-    n = int((last - first) // 86400) + 1
-    series = np.full(n, np.nan, dtype=np.float32)
-    for day, health in rows:
-        series[int((day - first) // 86400)] = health
-    fc = model.forecast(series[None, None], prediction_length=180)
-    median, low, high = (np.clip(a, 0.0, 1.0) for a in quantiles(fc, 0, float(np.nanmean(series))))
-    i80 = first_crossing(median, 0.8, below=True)
-    return payload("health", now, float(last + 86400), 86400, median, low, high, valid_points(series),
-                   model_name, {"kind": "health_in_6_months", "value": float(median[-1]),
-                                "days_to_80": None if i80 is None else i80 + 1})
+    days = np.array([r[0] for r in rows], dtype=float)
+    health = np.array([r[1] for r in rows], dtype=float)
+    cycles = np.array([r[2] for r in rows], dtype=float)
+    health_now, cycles_now = float(health[-1]), float(cycles[-1])
+    span_days = (days[-1] - days[0]) / 86400
+
+    # Cycles per day.
+    observed_rate = None
+    if span_days >= 1:
+        observed_rate = ((cycles[-1] - cycles[0]) / span_days, max(0.05, 1.0 / np.sqrt(span_days)))
+    rate_mean, rate_sd = precision_mean(PRIOR_CYCLES_PER_DAY, observed_rate)
+
+    # Capacity lost per cycle.
+    lifetime = (1 - health_now) / max(cycles_now, 1)
+    observed_loss = None
+    cycle_span = cycles[-1] - cycles[0]
+    if cycle_span >= MIN_CYCLE_SPAN_FOR_TREND and len(rows) >= 7:
+        slope, intercept = np.polyfit(cycles, health, 1)
+        residual = health - (slope * cycles + intercept)
+        se = np.sqrt(np.sum(residual ** 2) / max(len(rows) - 2, 1) / np.sum((cycles - cycles.mean()) ** 2))
+        observed_loss = (max(-slope, 0.0), max(se, 1e-6))
+    loss_mean, loss_sd = precision_mean((lifetime, max(lifetime * PRIOR_LOSS_SD_SHARE, 1e-5)), observed_loss)
+
+    weeks = HEALTH_YEARS * 52
+    ahead = np.arange(1, weeks + 1) * 7.0
+    rng = np.random.default_rng(0)          # fixed seed: the band doesn't jitter between runs
+    loss = np.clip(rng.normal(loss_mean, loss_sd, 4000), 0, None)
+    rate = np.clip(rng.normal(rate_mean, rate_sd, 4000), 0.01, None)
+    paths = np.clip(health_now - np.outer(loss * rate, ahead), 0, 1)
+    low, median, high = (np.percentile(paths, q, axis=0) for q in (10, 50, 90))
+
+    def days_to(series, level=0.8):
+        i = first_crossing(series, level, below=True)
+        return None if i is None else int(ahead[i])
+
+    log(f"health: {health_now:.3f} now, loss {loss_mean * 100:.4f}±{loss_sd * 100:.4f} %/cycle, "
+        f"{rate_mean:.2f}±{rate_sd:.2f} cycles/day, in 3 years {median[-1]:.3f} ({low[-1]:.3f}–{high[-1]:.3f})")
+    return payload("health", now, float(days[-1] + HEALTH_STEP), HEALTH_STEP, median, low, high, len(rows),
+                   model_name, {
+                       "kind": "health_projection", "years": HEALTH_YEARS,
+                       "value": float(median[-1]), "low": float(low[-1]), "high": float(high[-1]),
+                       "days_to_80": days_to(median), "days_to_80_low": days_to(low), "days_to_80_high": days_to(high),
+                       "based_on_days": round(span_days, 1), "based_on_cycles": int(cycle_span),
+                       "cycles_per_day": round(rate_mean, 2), "loss_per_cycle": loss_mean,
+                       "trend_observed": observed_loss is not None,
+                   }, covariates=["charge cycles per day (observed)", "capacity lost per cycle (observed trend)",
+                                  "battery lifetime average"])
 
 
 # MARK: - Accuracy

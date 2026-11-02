@@ -396,49 +396,83 @@ struct PowerBreakdown: View {
     }
 }
 
+/// Maximum capacity over the next three years: recorded history plus a projection whose band
+/// starts wide and narrows as Tempra sees more days and charge cycles.
 struct BatteryHealthChart: View {
     let history: [BatteryHealthPoint]
     let forecast: Forecast?
 
     var body: some View {
-        if history.count < 2 {
-            Text("Tempra records battery health once a day. A trend appears after a couple of days, and a Timestral projection after two weeks.")
-                .font(.callout).foregroundStyle(.secondary)
-            if let last = history.last {
+        VStack(alignment: .leading, spacing: 8) {
+            if let s = forecast?.summary, s.kind == "health_projection", let value = s.value {
+                Text(String(format: "In %d years: ~%.0f%%", s.years ?? 3, value * 100)
+                     + (s.low.flatMap { low in s.high.map { String(format: " (%.0f–%.0f%%)", low * 100, $0 * 100) } } ?? ""))
+                    .font(.headline)
+                Text(Self.eightyText(s)).font(.callout)
+                Text(Self.basisText(s)).font(.caption).foregroundStyle(.secondary)
+            } else if let last = history.last {
                 InfoRow(label: "Today", value: String(format: "%.1f%% · %d cycles", last.health * 100, last.cycleCount))
-            }
-        } else {
-            if let summary = forecast?.summary, let value = summary.value {
-                Text("Projected in 6 months: \(String(format: "%.1f%%", value * 100))"
-                     + (summary.daysTo80.map { " · reaches 80% in ~\($0) days" } ?? ""))
-                    .font(.callout)
             }
             Chart {
                 ForEach(history) { p in
-                    LineMark(x: .value("Day", p.date), y: .value("Health", p.health * 100))
+                    LineMark(x: .value("Date", p.date), y: .value("Capacity", p.health * 100))
                         .foregroundStyle(.green)
                 }
                 if let forecast {
                     ForEach(forecast.points()) { p in
-                        AreaMark(x: .value("Day", p.date), yStart: .value("Low", p.low * 100), yEnd: .value("High", p.high * 100))
+                        AreaMark(x: .value("Date", p.date), yStart: .value("Low", p.low * 100), yEnd: .value("High", p.high * 100))
                             .foregroundStyle(.green.opacity(0.15))
-                        LineMark(x: .value("Day", p.date), y: .value("Forecast", p.median * 100), series: .value("S", "f"))
+                        LineMark(x: .value("Date", p.date), y: .value("Projection", p.median * 100), series: .value("S", "projection"))
                             .foregroundStyle(.green)
                             .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                     }
                 }
-                RuleMark(y: .value("Service threshold", 80))
+                RuleMark(y: .value("Apple service threshold", 80))
                     .foregroundStyle(.red.opacity(0.5))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    .annotation(position: .bottom, alignment: .leading) {
+                        Text("80% · Apple recommends service below this").font(.caption2).foregroundStyle(.secondary)
+                    }
             }
-            .chartYAxis {
-                AxisMarks(position: .leading) { v in
-                    AxisGridLine()
-                    AxisValueLabel { if let d = v.as(Double.self) { Text("\(Int(d))%") } }
+            .chartYScale(domain: 50...100)
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .month, count: 6)) { _ in
+                    AxisGridLine().foregroundStyle(.quaternary)
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).year()).font(.caption2)
                 }
             }
-            .frame(height: 160)
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { v in
+                    AxisGridLine().foregroundStyle(.quaternary)
+                    AxisValueLabel { if let d = v.as(Double.self) { Text("\(Int(d))%").font(.caption2) } }
+                }
+            }
+            .frame(height: 180)
         }
+    }
+
+    private static func date(inDays days: Int) -> String {
+        Date().addingTimeInterval(Double(days) * 86400).formatted(.dateTime.month(.abbreviated).year())
+    }
+
+    /// When capacity is expected to reach 80%, with the range.
+    static func eightyText(_ s: Forecast.Summary) -> String {
+        let years = s.years ?? 3
+        guard let earliest = s.daysTo80Low else { return "Not expected to reach 80% within \(years) years." }
+        guard let median = s.daysTo80 else {
+            return "Most likely stays above 80% for \(years) years; it could get there from \(date(inDays: earliest))."
+        }
+        let latest = s.daysTo80High.map { "and \(date(inDays: $0))" } ?? "and after \(years) years"
+        return "Reaches 80% around \(date(inDays: median)) (between \(date(inDays: earliest)) \(latest))."
+    }
+
+    /// What the projection is based on, so it's clear why the band is wide or narrow.
+    static func basisText(_ s: Forecast.Summary) -> String {
+        let days = Int((s.basedOnDays ?? 0).rounded())
+        let span = days < 60 ? "\(days) day\(days == 1 ? "" : "s")" : "\(days / 30) months"
+        let rate = s.cyclesPerDay.map { String(format: " · %.2f cycles a day", $0) } ?? ""
+        return "Based on \(span) of history and \(s.basedOnCycles ?? 0) charge cycles\(rate). "
+            + "The range narrows as Tempra sees more days and cycles."
     }
 }
 

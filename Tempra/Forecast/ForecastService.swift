@@ -18,6 +18,13 @@ struct Forecast: Decodable, Sendable {
         let value: Double?
         let daysTo80: Int?
         let percent: Double?
+        // Battery health projection.
+        let years: Int?
+        let daysTo80Low: Int?
+        let daysTo80High: Int?
+        let basedOnDays: Double?
+        let basedOnCycles: Int?
+        let cyclesPerDay: Double?
         /// Battery life if unplugged now (sent while on the adapter).
         let ifUnplugged: ETA?
 
@@ -257,6 +264,8 @@ final class ForecastService {
             try process.run()
             worker = process
             workerStartedAt = Date()
+            // An error left by a previous session's worker isn't this one's.
+            Task { await store.setMeta("forecaster_error", "") }
             status = .starting
             Log.notice(.forecast, "Forecaster started (pid \(process.processIdentifier), \(model)); output in \(Self.logURL.path)")
         } catch {
