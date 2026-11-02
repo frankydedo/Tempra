@@ -120,11 +120,14 @@ struct PowerSpan: Identifiable, Sendable {
 
 /// Reports whether the hosting window is actually on screen (not closed, minimised or fully covered).
 struct WindowVisibilityReader: NSViewRepresentable {
+    /// Receives the hosting window, e.g. to close the menu bar panel from inside it.
+    var onWindow: ((NSWindow?) -> Void)?
     let onChange: (Bool) -> Void
 
     func makeNSView(context: Context) -> NSView {
         let view = ObservingView()
         view.onChange = onChange
+        view.onWindow = onWindow
         return view
     }
 
@@ -132,10 +135,12 @@ struct WindowVisibilityReader: NSViewRepresentable {
 
     final class ObservingView: NSView {
         var onChange: ((Bool) -> Void)?
+        var onWindow: ((NSWindow?) -> Void)?
         private var observer: NSObjectProtocol?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
+            onWindow?(window)
             if let observer { NotificationCenter.default.removeObserver(observer) }
             guard let window else { onChange?(false); return }
             observer = NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,

@@ -8,6 +8,8 @@ struct SummaryView: View {
     private let forecaster = ForecastService.shared
     @State private var visible = true
     @State private var height: CGFloat = 520
+    /// The menu bar panel's own window, closed when the panel opens another window.
+    @State private var panel: NSWindow?
 
     var body: some View {
         // The panel's window stays alive after it closes; while it's off screen, show a same-sized
@@ -23,7 +25,7 @@ struct SummaryView: View {
                 Color.clear.frame(width: 360, height: height)
             }
         }
-        .background(WindowVisibilityReader { isVisible in
+        .background(WindowVisibilityReader(onWindow: { panel = $0 }) { isVisible in
             visible = isVisible
             UIVisibility.shared.summary = isVisible
         })
@@ -92,8 +94,7 @@ struct SummaryView: View {
             }
             Spacer()
             Button {
-                NSApp.activate(ignoringOtherApps: true)
-                openSettings()
+                showSettings()
             } label: { Image(systemName: "gearshape") }
                 .buttonStyle(.borderless)
                 .help("Settings")
@@ -121,8 +122,7 @@ struct SummaryView: View {
                         .font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     Spacer()
                     Button("Set Up…") {
-                        NSApp.activate(ignoringOtherApps: true)
-                        openSettings()
+                        showSettings()
                     }
                     .controlSize(.small)
                 }
@@ -159,8 +159,15 @@ struct SummaryView: View {
     }
 
     private func openDashboard() {
+        panel?.close()
         NSApp.activate(ignoringOtherApps: true)
         openWindow(id: TempraApp.dashboardWindowID)
+    }
+
+    private func showSettings() {
+        panel?.close()
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
     }
 
     /// One compact line for network and disk, which matter less at a glance.
