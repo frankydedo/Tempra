@@ -251,17 +251,19 @@ history from **Settings → Data**.
 - [x] Live power by component without privileges: whole Mac, chip, CPU & rest of chip, GPU
 - [ ] Neural Engine and memory power (macOS only exposes them to privileged processes)
 - [ ] CPU cluster and GPU frequencies, GPU temperature
-- [ ] Per-app energy impact history
+- [ ] **Who's consuming**: the processes behind CPU, GPU and power spikes, recorded during the spike and annotated on the charts, plus an energy ranking per app
 - [ ] Intel Mac support (SMC thermals)
 
 **Forecasting**
-- [ ] Covariate-aware forecasts: CPU and GPU load as past covariates for battery and temperature, time-of-day and weekday as known covariates
-- [ ] Learn charging habits and suggest when to unplug to preserve battery health
+- [x] Multivariate forecasts with covariates (adapter state, time of day) and a physics-based battery model
+- [ ] **Clock-time forecasts**: "battery until ~18:40", "full at ~11:25", and "will it last until 19:00?" answered with a probability from the forecast bands
+- [ ] **Battery report**: daily and weekly time on battery, real runtime per full charge, charging habits (e.g. hours spent at 100%) with battery-health tips
+- [ ] Startup disk forecast: when the disk will be full at the current rate
 - [ ] Run Timestral natively through Core ML on the Neural Engine, removing the Python dependency
 - [x] Forecast accuracy report comparing past forecasts with what actually happened
 
 **App**
-- [ ] Desktop and Notification Center widgets (WidgetKit)
+- [ ] Desktop and Notification Center widgets (WidgetKit): CPU, memory, battery with its forecast, temperature
 - [ ] Export history to CSV and JSON
 - [ ] Customisable dashboard layout and summary tiles
 - [ ] Italian localization
