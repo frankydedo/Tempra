@@ -147,7 +147,8 @@ final class SystemMonitor {
             await store.recordBatteryHealth(battery, at: snapshot.date)
         }
         if processesVisible {
-            await refreshProcesses()
+            // `top` needs about a second for its CPU sample: refresh alongside, never delaying sampling.
+            Task { await refreshProcesses() }
         }
     }
 
@@ -247,7 +248,12 @@ final class SystemMonitor {
         await store.setMeta("battery_state", String(decoding: data, as: UTF8.self))
     }
 
+    private var refreshingProcesses = false
+
     private func refreshProcesses() async {
+        guard !refreshingProcesses else { return }
+        refreshingProcesses = true
+        defer { refreshingProcesses = false }
         processes = await ProcessReader.all()
     }
 }

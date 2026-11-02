@@ -509,7 +509,7 @@ struct ProcessesSection: View {
                     .width(120)
             }
             .frame(minHeight: 480)
-            Text("CPU is a percentage of one core (like Activity Monitor). Updated every sample while this view is open.")
+            Text("Same measures as Activity Monitor: CPU over the last second as a percentage of one core, and memory as the physical footprint, including compressed memory. Updated while this view is open.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .onAppear { monitor.processesVisible = true }

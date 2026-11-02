@@ -52,7 +52,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | **Power** | Whole Mac, chip (SoC), CPU & rest of chip, GPU, adapter input — live, every sample | SMC (`PSTR`, `PHPC`, `PDTR`), IOReport GPU energy |
 | **Battery flow** | Watts into or out of the battery, adapter rating | `AppleSmartBattery` |
 | **I/O** | Network down/up, disk read/write, free space | `getifaddrs`, `IOBlockStorageDriver` |
-| **Processes** | CPU and resident memory per process | `ps` |
+| **Processes** | CPU over the last second and memory footprint per process, as in Activity Monitor | `top` |
 
 ### Health states
 
@@ -275,7 +275,7 @@ history from **Settings → Data**.
 - Temperatures come from private IOKit HID APIs. They work on current Apple Silicon Macs, but a macOS
   update could change sensor names. For the same reason Tempra is not sandboxed and cannot ship on the App Store.
 - GPU temperature is not exposed separately on Apple Silicon, so it is included in the SoC readings.
-- `ps` reports process CPU as a percentage of one core, like Activity Monitor.
+- Process CPU is a percentage of one core and memory is the physical footprint, as in Activity Monitor.
 
 ## Development notes
 
