@@ -73,8 +73,11 @@ enum HealthRules {
     static let memoryWindow: TimeInterval = 60
     static let memoryShare = 0.8
 
-    /// A metric returns to a calmer state only after it has stayed there this long.
+    /// A metric returns to a calmer state only after it has stayed there this long...
     static let recoveryDelay: TimeInterval = 120
+    /// ...and only once load and memory pressure are this far below the threshold that raised it
+    /// (a 75% Warning clears below 65%), so a value hovering at a threshold doesn't flip every minute.
+    static let exitMargin = 0.10
     /// Metrics that can hover around a threshold. Battery and power follow the adapter instantly.
     static let hysteresis: Set<HealthMetric> = [.cpu, .gpu, .memory, .thermal, .disk]
 }
@@ -137,6 +140,28 @@ extension Snapshot {
         }
     }
 
+    /// The state a metric must drop below before it's shown as calmer: thresholds lowered by
+    /// `exitMargin`, and memory judged on the latest reading, because `sustained` takes most of a
+    /// minute to notice that pressure has come back.
+    func calmHealth(_ metric: HealthMetric, live: [Metric: [ChartPoint]]) -> HealthState {
+        let margin = HealthRules.exitMargin
+        switch metric {
+        case .cpu:
+            return Self.loadState(Self.recentAverage(live[.cpu]) ?? cpuTotal, margin: margin)
+        case .gpu:
+            guard let gpu else { return .normal }
+            return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu, margin: margin)
+        case .memory:
+            if memPressureLevel == .critical || memPressure > HealthRules.memoryCriticalPressure - margin
+                || swapOutRate > HealthRules.swapCriticalRate { return .critical }
+            if memPressure > HealthRules.memoryWarningPressure - margin
+                || swapOutRate > HealthRules.swapWarningRate { return .warning }
+            return .normal
+        default:
+            return health(metric, live: live)
+        }
+    }
+
     /// The values behind a state, for logs ("why did this turn Critical?").
     func healthDetail(_ metric: HealthMetric, live: [Metric: [ChartPoint]]) -> String {
         switch metric {
@@ -186,9 +211,9 @@ extension Snapshot {
         return Double(window.filter { $0.value > threshold }.count) / Double(window.count) >= HealthRules.memoryShare
     }
 
-    private static func loadState(_ value: Double) -> HealthState {
-        if value > HealthRules.loadCritical { return .critical }
-        return value >= HealthRules.loadWarning ? .warning : .normal
+    private static func loadState(_ value: Double, margin: Double = 0) -> HealthState {
+        if value > HealthRules.loadCritical - margin { return .critical }
+        return value >= HealthRules.loadWarning - margin ? .warning : .normal
     }
 
     private static func recentAverage(_ points: [ChartPoint]?) -> Double? {

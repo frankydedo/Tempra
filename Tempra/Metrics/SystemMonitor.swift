@@ -194,10 +194,16 @@ final class SystemMonitor {
             if raw >= shown || !HealthRules.hysteresis.contains(metric) {
                 next = raw
                 calmerSince[metric] = nil
-            } else if let since = calmerSince[metric] {
-                if snapshot.date.timeIntervalSince(since) >= HealthRules.recoveryDelay { next = raw }
             } else {
-                calmerSince[metric] = snapshot.date
+                // Recovery restarts whenever the metric is back near the level shown.
+                let calm = max(raw, snapshot.calmHealth(metric, live: live))
+                if calm >= shown {
+                    calmerSince[metric] = nil
+                } else if let since = calmerSince[metric] {
+                    if snapshot.date.timeIntervalSince(since) >= HealthRules.recoveryDelay { next = calm }
+                } else {
+                    calmerSince[metric] = snapshot.date
+                }
             }
             guard next != shown else { continue }
             calmerSince[metric] = nil
