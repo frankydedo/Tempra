@@ -177,6 +177,7 @@ extension Snapshot {
     var batteryStateText: String {
         guard let b = battery else { return "No battery" }
         if b.isCharging { return "Charging" }
+        if macOSRunsOnBattery { return "On adapter, using battery (battery care)" }
         if b.onAC { return b.percent >= 99 || b.isFullyCharged ? "Fully charged" : "On adapter, not charging" }
         return "On battery"
     }

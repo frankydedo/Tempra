@@ -118,7 +118,10 @@ extension Snapshot {
         case .power:
             guard let b = battery, let power = b.systemPower, power > 0 else { return .normal }
             if b.onAC {
-                if Self.sustainedDischargeOnAdapter(live) { return .critical }
+                // A battery draining on the adapter is only a problem when the adapter is actually
+                // supplying power and still can't keep up. macOS also runs from the battery on purpose
+                // (battery health management) with the adapter idle; that's Normal.
+                if Self.sustainedDischargeOnAdapter(live), !macOSRunsOnBattery { return .critical }
                 if let watts = b.adapterWatts, watts > 0, power > Double(watts) * HealthRules.adapterWarning { return .warning }
                 return .normal
             }
@@ -149,9 +152,10 @@ extension Snapshot {
             return String(format: "thermal state %@, SoC %.0f°C, hotspot %.0f°C", thermalStateText, socTemp ?? 0, socTempMax ?? 0)
         case .battery, .batteryHealth, .power:
             guard let b = battery else { return "no battery" }
-            return String(format: "%@, %.0f%%, system %.1f W, battery %.2f A × %.2f V, adapter %@, runtime %@, low-battery warning %@, health %.1f%%%@",
-                          b.onAC ? "on adapter" : "on battery", b.percent, b.systemPower ?? 0, b.amperage, b.voltage,
-                          b.adapterWatts.map { "\($0) W" } ?? "—", b.runtimeHours.map { String(format: "%.1f h", $0) } ?? "—",
+            return String(format: "%@, %.0f%%, system %.1f W, battery %.2f A × %.2f V, adapter %@ (in %.1f W), runtime %@, low-battery warning %@, health %.1f%%%@",
+                          macOSRunsOnBattery ? "on adapter, macOS running on battery" : (b.onAC ? "on adapter" : "on battery"),
+                          b.percent, b.systemPower ?? 0, b.amperage, b.voltage,
+                          b.adapterWatts.map { "\($0) W" } ?? "—", power.adapterInput ?? 0, b.runtimeHours.map { String(format: "%.1f h", $0) } ?? "—",
                           String(describing: b.lowBatteryWarning), b.health * 100,
                           (b.healthCondition.map { ", condition \($0)" } ?? "")
                             + (b.notChargingReason != 0 ? ", not charging reason \(b.notChargingReason)" : "")

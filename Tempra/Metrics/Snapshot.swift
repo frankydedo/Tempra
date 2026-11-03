@@ -64,6 +64,16 @@ struct Snapshot: Sendable {
     var diskTotal: Int64 = 0
 
     var memUsedFraction: Double { memTotal > 0 ? Double(memUsed) / Double(memTotal) : 0 }
+
+    /// macOS is deliberately running the Mac from the battery while plugged in (battery health
+    /// management lets it drain a few percent before charging again; "Charge to Full Now" ends it):
+    /// it reports a reason for not charging and the adapter is nearly idle. Seen here: 0.6 W in from a
+    /// 58 W adapter. An adapter that's too weak looks different: it delivers close to its rating.
+    var macOSRunsOnBattery: Bool {
+        guard let b = battery, b.onAC, !b.isCharging, b.notChargingReason != 0 else { return false }
+        let input = power.adapterInput ?? 0
+        return input < max(Double(b.adapterWatts ?? 0) * 0.25, 2)
+    }
 }
 
 enum MemoryPressureLevel: Int, Sendable {

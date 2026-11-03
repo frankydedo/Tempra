@@ -63,7 +63,7 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | Battery level | macOS low-battery warning | Early (below ~22%) | Final (~10 min left) |
 | Battery health | macOS battery condition, Apple's 80% threshold | Capacity below 80% | Service recommended |
 | CPU, GPU | 1-minute average load | 75–90% | above 90% |
-| Power | Runtime at current draw, or adapter headroom | Under 2 h left, or above 90% of the adapter's rating | Under 1 h left, or battery draining while plugged in |
+| Power | Runtime at current draw, or adapter headroom | Under 2 h left, or above 90% of the adapter's rating | Under 1 h left, or battery draining while plugged in with the adapter delivering power (not when macOS uses the battery on purpose) |
 | Startup disk | Free space | Under 20 GB or 10% | Under 5 GB or 3% |
 
 Normal is left uncoloured so that Warning and Critical stand out; the state is always written out too.
