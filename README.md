@@ -67,6 +67,8 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | Startup disk | Free space | Under 20 GB or 10% | Under 5 GB or 3% |
 
 Normal is left uncoloured so that Warning and Critical stand out; the state is always written out too.
+Whatever the menu bar shows, a red dot on its icon flags any other metric in Critical — for example memory
+while the menu bar shows CPU.
 A state that gets worse shows at once; one that improves waits two minutes, so a metric hovering around a
 threshold doesn't make the colours flicker.
 

@@ -33,8 +33,10 @@ enum DebugSnapshots {
             for (name, view) in sections {
                 windows.append((name, window(view.padding(20), width: name == "settings" ? 520 : 900)))
             }
-            for (name, color) in [("menubar-warning", NSColor.systemOrange), ("menubar-critical", NSColor.systemRed)] {
-                let image = MenuBarLabel.tintedImage(symbol: "memorychip", text: "54%", color: color)
+            for (name, color, badge) in [("menubar-warning", NSColor.systemOrange, nil as NSColor?),
+                                         ("menubar-critical", NSColor.systemRed, nil),
+                                         ("menubar-other-critical", NSColor.labelColor, NSColor.systemRed)] {
+                let image = MenuBarLabel.tintedImage(symbol: "cpu", text: "18%", color: color, badge: badge)
                 if let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                     try? rep.representation(using: .png, properties: [:])?.write(to: url.appendingPathComponent("\(name).png"))
                 }

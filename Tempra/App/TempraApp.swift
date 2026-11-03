@@ -73,7 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 /// Menu bar item: icon plus the user's chosen live value, tinted orange or red when that
-/// statistic is in Warning or Critical.
+/// statistic is in Warning or Critical. A red dot on the icon flags any *other* metric in Critical
+/// (e.g. memory while the menu bar shows CPU), so a serious problem is never invisible.
 struct MenuBarLabel: View {
     @AppStorage(SettingsKey.menuBarDisplay) private var display = MenuBarDisplay.cpu.rawValue
     private let monitor = SystemMonitor.shared
@@ -83,10 +84,13 @@ struct MenuBarLabel: View {
         let symbol = monitor.hasSample ? mode.symbol(for: monitor.latest) : MenuBarDisplay.iconOnly.symbol(for: monitor.latest)
         let text = monitor.hasSample ? mode.text(for: monitor.latest) : nil
         let state = monitor.hasSample ? mode.healthMetric.map(monitor.health) ?? .normal : .normal
+        let otherCritical = monitor.hasSample
+            && HealthMetric.allCases.contains { $0 != mode.healthMetric && monitor.health($0) == .critical }
 
-        if let color = state.nsColor {
+        if state.nsColor != nil || otherCritical {
             // Menu bar labels are drawn as monochrome templates, so colour needs a pre-rendered image.
-            Image(nsImage: Self.tintedImage(symbol: symbol, text: text, color: color))
+            Image(nsImage: Self.tintedImage(symbol: symbol, text: text, color: state.nsColor ?? .labelColor,
+                                            badge: otherCritical ? .systemRed : nil))
         } else {
             HStack(spacing: 4) {
                 Image(systemName: symbol)
@@ -95,7 +99,7 @@ struct MenuBarLabel: View {
         }
     }
 
-    static func tintedImage(symbol: String, text: String?, color: NSColor) -> NSImage {
+    static func tintedImage(symbol: String, text: String?, color: NSColor, badge: NSColor? = nil) -> NSImage {
         let fontSize = NSFont.menuBarFont(ofSize: 0).pointSize
         let config = NSImage.SymbolConfiguration(pointSize: fontSize, weight: .regular)
             .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
@@ -114,6 +118,13 @@ struct MenuBarLabel: View {
         let image = NSImage(size: NSSize(width: max(width, 1), height: height), flipped: false) { _ in
             icon?.draw(in: NSRect(x: 0, y: (height - iconSize.height) / 2, width: iconSize.width, height: iconSize.height))
             label?.draw(at: NSPoint(x: iconSize.width + spacing, y: (height - labelSize.height) / 2))
+            if let badge {
+                // A dot on the icon's top-right corner.
+                let diameter: CGFloat = 6.5
+                badge.setFill()
+                NSBezierPath(ovalIn: NSRect(x: iconSize.width - diameter * 0.6, y: height - diameter - 1,
+                                            width: diameter, height: diameter)).fill()
+            }
             return true
         }
         image.isTemplate = false
