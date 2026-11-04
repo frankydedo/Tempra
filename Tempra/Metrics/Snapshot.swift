@@ -74,6 +74,13 @@ struct Snapshot: Sendable {
         let input = power.adapterInput ?? 0
         return input < max(Double(b.adapterWatts ?? 0) * 0.25, 2)
     }
+
+    /// The adapter's input (live) covers the whole system's draw (live), so a discharge reported by the
+    /// battery gauge, which lags by 30–60 s, is already over.
+    var adapterCoversSystem: Bool {
+        guard let input = power.adapterInput, input > 0, let system = battery?.systemPower else { return false }
+        return input > system + HealthRules.adapterDischargeWatts
+    }
 }
 
 enum MemoryPressureLevel: Int, Sendable {

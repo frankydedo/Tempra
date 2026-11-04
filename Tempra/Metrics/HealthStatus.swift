@@ -44,6 +44,9 @@ enum HealthRules {
     static let loadWindow: TimeInterval = 60
     static let loadWarning = 0.75
     static let loadCritical = 0.90
+    /// GPU utilisation only counts while the GPU also draws this much: macOS reports it busy at its
+    /// lowest clock too (~75% at 0.5 W for window compositing), while real work draws 4 W and more.
+    static let gpuBusyWatts = 2.0
 
     /// Battery runtime at the current draw, in hours.
     static let runtimeWarning = 2.0
@@ -88,8 +91,7 @@ extension Snapshot {
         case .cpu:
             return Self.loadState(Self.recentAverage(live[.cpu]) ?? cpuTotal)
         case .gpu:
-            guard let gpu else { return .normal }
-            return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu)
+            return gpuState(live: live)
         case .memory:
             // Follows what Activity Monitor's colours mean: little memory left (its graph is the same
             // pressure percentage) or active swapping. macOS's "warning" level is not used: it's a hint
@@ -124,7 +126,7 @@ extension Snapshot {
                 // A battery draining on the adapter is only a problem when the adapter is actually
                 // supplying power and still can't keep up. macOS also runs from the battery on purpose
                 // (battery health management) with the adapter idle; that's Normal.
-                if Self.sustainedDischargeOnAdapter(live), !macOSRunsOnBattery { return .critical }
+                if Self.sustainedDischargeOnAdapter(live), !macOSRunsOnBattery, !adapterCoversSystem { return .critical }
                 if let watts = b.adapterWatts, watts > 0, power > Double(watts) * HealthRules.adapterWarning { return .warning }
                 return .normal
             }
@@ -149,8 +151,7 @@ extension Snapshot {
         case .cpu:
             return Self.loadState(Self.recentAverage(live[.cpu]) ?? cpuTotal, margin: margin)
         case .gpu:
-            guard let gpu else { return .normal }
-            return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu, margin: margin)
+            return gpuState(live: live, margin: margin)
         case .memory:
             if memPressureLevel == .critical || memPressure > HealthRules.memoryCriticalPressure - margin
                 || swapOutRate > HealthRules.swapCriticalRate { return .critical }
@@ -168,7 +169,8 @@ extension Snapshot {
         case .cpu:
             return String(format: "CPU %.0f%%, 1-min avg %.0f%%", cpuTotal * 100, (Self.recentAverage(live[.cpu]) ?? cpuTotal) * 100)
         case .gpu:
-            return String(format: "GPU %.0f%%, 1-min avg %.0f%%", (gpu ?? 0) * 100, (Self.recentAverage(live[.gpu]) ?? gpu ?? 0) * 100)
+            return String(format: "GPU %.0f%%, 1-min avg %.0f%% at %.1f W", (gpu ?? 0) * 100,
+                          (Self.recentAverage(live[.gpu]) ?? gpu ?? 0) * 100, Self.recentAverage(live[.gpuPower]) ?? power.gpu ?? 0)
         case .memory:
             return String(format: "pressure %.0f%% (macOS level %@), used %@, swap %@, swapping out %@/s",
                           memPressure * 100, memPressureLevel.label, Format.bytes(memUsed), Format.bytes(swapUsed),
@@ -209,6 +211,12 @@ extension Snapshot {
         let window = points.filter { $0.date >= now.addingTimeInterval(-HealthRules.memoryWindow) }
         guard window.count >= 3 else { return false }
         return Double(window.filter { $0.value > threshold }.count) / Double(window.count) >= HealthRules.memoryShare
+    }
+
+    private func gpuState(live: [Metric: [ChartPoint]], margin: Double = 0) -> HealthState {
+        guard let gpu else { return .normal }
+        if let watts = Self.recentAverage(live[.gpuPower]) ?? power.gpu, watts < HealthRules.gpuBusyWatts { return .normal }
+        return Self.loadState(Self.recentAverage(live[.gpu]) ?? gpu, margin: margin)
     }
 
     private static func loadState(_ value: Double, margin: Double = 0) -> HealthState {
