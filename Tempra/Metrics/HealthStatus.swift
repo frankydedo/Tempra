@@ -130,7 +130,8 @@ extension Snapshot {
                 if let watts = b.adapterWatts, watts > 0, power > Double(watts) * HealthRules.adapterWarning { return .warning }
                 return .normal
             }
-            guard let hours = b.runtimeHours else { return .normal }
+            // The draw jumps by 2× from second to second; the last minute's average doesn't.
+            guard let hours = b.runtimeHours(drawing: Self.recentAverage(live[.systemPower])) else { return .normal }
             if hours < HealthRules.runtimeCritical { return .critical }
             return hours < HealthRules.runtimeWarning ? .warning : .normal
         case .disk:
@@ -179,10 +180,10 @@ extension Snapshot {
             return String(format: "thermal state %@, SoC %.0f°C, hotspot %.0f°C", thermalStateText, socTemp ?? 0, socTempMax ?? 0)
         case .battery, .batteryHealth, .power:
             guard let b = battery else { return "no battery" }
-            return String(format: "%@, %.0f%%, system %.1f W, battery %.2f A × %.2f V, adapter %@ (in %.1f W), runtime %@, low-battery warning %@, health %.1f%%%@",
+            return String(format: "%@, %.0f%%, system %.1f W, battery %.2f A × %.2f V, adapter %@ (in %.1f W), runtime %@ (1-min avg), low-battery warning %@, health %.1f%%%@",
                           macOSRunsOnBattery ? "on adapter, macOS running on battery" : (b.onAC ? "on adapter" : "on battery"),
                           b.percent, b.systemPower ?? 0, b.amperage, b.voltage,
-                          b.adapterWatts.map { "\($0) W" } ?? "—", power.adapterInput ?? 0, b.runtimeHours.map { String(format: "%.1f h", $0) } ?? "—",
+                          b.adapterWatts.map { "\($0) W" } ?? "—", power.adapterInput ?? 0, b.runtimeHours(drawing: Self.recentAverage(live[.systemPower])).map { String(format: "%.1f h", $0) } ?? "—",
                           String(describing: b.lowBatteryWarning), b.health * 100,
                           (b.healthCondition.map { ", condition \($0)" } ?? "")
                             + (b.notChargingReason != 0 ? ", not charging reason \(b.notChargingReason)" : "")
@@ -232,9 +233,9 @@ extension Snapshot {
 }
 
 extension BatteryInfo {
-    /// Hours left at the current whole-system draw.
-    var runtimeHours: Double? {
-        guard let power = systemPower, power > 0.5, voltage > 0 else { return nil }
+    /// Hours left at `watts`, by default the current whole-system draw.
+    func runtimeHours(drawing watts: Double? = nil) -> Double? {
+        guard let power = watts ?? systemPower, power > 0.5, voltage > 0 else { return nil }
         return Double(currentCapacity) / 1000 * voltage / power
     }
 }
