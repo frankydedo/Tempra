@@ -73,6 +73,13 @@ struct Sparkline: View {
     }
 }
 
+/// A history point and the stretch of continuous samples it belongs to.
+private struct SegmentedPoint: Identifiable {
+    let point: ChartPoint
+    let segment: Int
+    var id: Date { point.date }
+}
+
 /// History chart for one metric with an optional Timestral forecast band appended on the right.
 struct HistoryChart: View {
     let metric: Metric
@@ -115,6 +122,16 @@ struct HistoryChart: View {
         }
     }
 
+    /// Points split where samples are missing (the Mac was asleep or off), so the line breaks there
+    /// instead of drawing a curve through hours without data.
+    private var segmented: [SegmentedPoint] {
+        var segment = 0
+        return points.indices.map { i in
+            if i > 0, points[i].date.timeIntervalSince(points[i - 1].date) > range.bucket * 3 { segment += 1 }
+            return SegmentedPoint(point: points[i], segment: segment)
+        }
+    }
+
     private var chart: some View {
         let forecastPoints = visibleForecast
         let domain = metric.yDomain ?? autoDomain(forecastPoints)
@@ -124,13 +141,14 @@ struct HistoryChart: View {
                               yStart: .value("Bottom", domain.lowerBound), yEnd: .value("Top", domain.upperBound))
                     .foregroundStyle(span.kind.color.opacity(span.kind.opacity))
             }
-            ForEach(points) { point in
+            ForEach(segmented) { item in
+                let point = item.point, series = "history \(item.segment)"
                 // Fill down to the axis minimum (not zero) so the area never spills below the plot.
                 AreaMark(x: .value("Time", point.date), yStart: .value("Base", domain.lowerBound),
-                         yEnd: .value(metric.title, point.value), series: .value("Series", "history"))
+                         yEnd: .value(metric.title, point.value), series: .value("Series", series))
                     .foregroundStyle(LinearGradient(colors: [metric.color.opacity(0.25), metric.color.opacity(0.02)], startPoint: .top, endPoint: .bottom))
                     .interpolationMethod(.monotone)
-                LineMark(x: .value("Time", point.date), y: .value(metric.title, point.value), series: .value("Series", "history"))
+                LineMark(x: .value("Time", point.date), y: .value(metric.title, point.value), series: .value("Series", series))
                     .foregroundStyle(metric.color)
                     .interpolationMethod(.monotone)
             }
