@@ -9,6 +9,8 @@ final class UIVisibility {
     static let shared = UIVisibility()
     var dashboard = false
     var summary = false
+    /// Debug snapshots render into offscreen windows, which must draw as if visible.
+    var drawsOffscreen = false
     private init() {}
 }
 
@@ -151,7 +153,7 @@ struct WindowVisibilityReader: NSViewRepresentable {
         }
 
         private func report() {
-            onChange?(window?.occlusionState.contains(.visible) ?? false)
+            onChange?(window?.occlusionState.contains(.visible) ?? false || UIVisibility.shared.drawsOffscreen)
         }
 
         deinit {

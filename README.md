@@ -33,9 +33,9 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 | 🚦 **Health at a glance** | Every key metric is Normal, Warning or Critical, using macOS's own signals where they exist. Warning values turn orange, Critical red, in the panel, the dashboard and the menu bar. |
 | 🪟 **Glanceable summary** | Click the icon for a compact panel with the essentials, sparklines and the latest forecasts. |
 | 📊 **Full dashboard** | A real window with history from 15 minutes to 30 days, per-core CPU (P and E cores), GPU renderer and tiler load, memory breakdown, thermals, battery and power, disk and network, and a live process list. |
-| 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature and power, and a 3-year battery health projection whose range narrows as history grows. |
+| 🔮 **Forecasts with Timestral** | Multivariate, probabilistic forecasts (10th–90th percentile bands): time to empty or full and battery life if you unplug, next-hour CPU, GPU, memory pressure, temperature, fan speed and power, and a 3-year battery health projection whose range narrows as history grows. |
 | 🗄️ **Long-term history** | Every sample for 24 h, 1-minute averages for 30 days, hourly averages forever, in a single SQLite file. |
-| 🪶 **Lightweight** | Native Swift, no daemon with root privileges. Charts only redraw while on screen, so Tempra uses about 1–2% of one core in the background; the forecaster a few milliseconds per minute. |
+| 🪶 **Lightweight** | Native Swift, no daemon with root privileges. Charts only redraw while on screen, so Tempra uses about 1–2% of one core in the background; the forecaster well under a second per minute. |
 | 🎨 **Liquid Glass icon** | Designed in Icon Composer: a history line flowing into three forecast bands, in six palettes (Indigo, Night, Dawn, Aurora, Sky, Graphite) to pick from in Settings. |
 | 🔒 **Private** | No accounts, no telemetry, no network calls except the one-time model download. |
 
@@ -69,8 +69,9 @@ long-term history, and forecasts what comes next with Mistral's **Timestral**, r
 Normal is left uncoloured so that Warning and Critical stand out; the state is always written out too.
 Whatever the menu bar shows, a red dot on its icon flags any other metric in Critical — for example memory
 while the menu bar shows CPU.
-A state that gets worse shows at once; one that improves waits two minutes, so a metric hovering around a
-threshold doesn't make the colours flicker.
+A state that gets worse shows at once. One that improves waits two minutes, and load and memory pressure must
+also drop 10 points below the threshold that raised it (a 75% Warning clears below 65%), so a metric hovering
+around a threshold doesn't make the colours flicker. Memory must be calm in its latest reading too.
 
 ## Screenshots
 
@@ -159,7 +160,7 @@ battery. Tempra's forecasts use those links instead of predicting each metric on
 | Block | Steps · context · horizon | Targets | Conditioned on |
 |---|---|---|---|
 | **System** | 1 min · 14 days · 1 h | CPU, GPU, memory pressure, SoC temperature, fan speed and system power, **forecast jointly** as variates of one series | Adapter state (past covariate), time of day (known-future covariate) |
-| **Battery** | 5 min · 30 days · 12 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
+| **Battery** | 5 min · 30 days · 24 h | System power, forecast jointly with CPU and GPU load | Power-source scenario and time of day (known-future covariates) |
 | **Battery health** | 1 week · all · 3 years | Maximum capacity | Capacity lost per charge cycle and cycles per day (see below) |
 
 **Battery level** comes from a hybrid model: Timestral forecasts the power the Mac will draw, and Tempra
@@ -247,12 +248,13 @@ Tempra/
 ├── App/            App entry point, menu bar label, settings keys
 ├── Metrics/        Readers for CPU, GPU, memory, thermals, battery, I/O, processes
 ├── Storage/        SQLite history (raw → minute → hour) and metric definitions
+├── Support/        C helpers for the SMC and IOReport, bridging header for private HID APIs
 ├── Forecast/       Launches the Python worker and reads its forecasts
 ├── Resources/      AppIcon.icon (Icon Composer) and alternate icon renders
 └── UI/             Summary panel, dashboard sections, charts, settings
 forecaster/         Timestral worker, pyproject and setup script
 design/             Icon generator, Icon Composer documents and previews
-scripts/build.sh    Release build and install
+scripts/           build.sh (Release build and install), package.sh (release zip and checksum)
 ```
 
 ## Privacy

@@ -12,7 +12,8 @@ enum DebugSnapshots {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
 
         Task { @MainActor in
-            UIVisibility.shared.dashboard = true   // snapshot windows are offscreen but must draw
+            UIVisibility.shared.drawsOffscreen = true
+            UIVisibility.shared.dashboard = true   // sections are rendered without the dashboard window
             try? await Task.sleep(for: .seconds(8))
             var windows: [(String, NSWindow)] = []
             windows.append(("summary", window(SummaryView(), width: 360)))
