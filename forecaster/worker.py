@@ -545,28 +545,48 @@ def calibrate_band(conn, metric: str, coverage: float) -> None:
 
 
 BATTERY_MIN_SCORED_STEPS = 6   # 30 minutes
+BATTERY_AWAKE_MINUTES = 4      # sampled minutes out of 5 per step; background wakes during sleep sample one or two
+BATTERY_TOLERANCE = 0.5        # macOS reports whole percents, so the real level is within half a point
+
+
+def minutes_sampled(conn, start, step, count) -> np.ndarray:
+    rows = conn.execute("SELECT CAST(ts / ? AS INTEGER) * ? AS b, COUNT(*) FROM minute WHERE ts >= ? AND ts < ? GROUP BY b",
+                        (step, step, start, start + count * step)).fetchall()
+    minutes = np.zeros(count)
+    for bucket, n in rows:
+        i = int(round((bucket - start) / step))
+        if 0 <= i < count:
+            minutes[i] = n
+    return minutes
 
 
 def battery_valid_steps(conn, generated_at, start, step, n, now) -> int | None:
     """How many leading steps of a battery forecast can be scored, or None to wait.
 
-    A battery forecast assumes the Mac stays awake and on the same power source. It is scored as
-    soon as that stops being true (adapter plugged/unplugged, or a gap such as sleep) or its whole
-    horizon has passed, over the steps until then. Waiting for 24 unbroken hours would mean almost
-    no battery forecast ever gets scored."""
+    A battery forecast assumes the Mac stays in use, on the same power source, and charging or not
+    as it was. It is scored as soon as that stops being true (adapter plugged/unplugged, charging
+    started or stopped, e.g. at 100% after which macOS may run the Mac from the battery on purpose,
+    or the Mac asleep) or its whole horizon has passed, over the steps until then. Waiting for 24
+    unbroken hours would mean almost no battery forecast ever gets scored."""
     elapsed = min(n, int((now - 60 - start) // step))
     if elapsed <= 0:
         return None
     level = actual_values(conn, "batt_pct", start, step, elapsed)
     adapter = actual_values(conn, "on_ac", start, step, elapsed)
-    # The power source when the forecast was made: the minute it was generated in.
-    row = conn.execute("SELECT on_ac FROM minute WHERE ts <= ? AND on_ac IS NOT NULL ORDER BY ts DESC LIMIT 1",
+    charging = actual_values(conn, "charging", start, step, elapsed)
+    awake = minutes_sampled(conn, start, step, elapsed)
+    # The power state when the forecast was made: the minute it was generated in.
+    row = conn.execute("SELECT on_ac, charging FROM minute WHERE ts <= ? AND on_ac IS NOT NULL ORDER BY ts DESC LIMIT 1",
                        (generated_at,)).fetchone()
     if row is None:
         return 0
-    state = round(row[0])
-    # Any bucket that isn't entirely on the same power source ends the forecast's validity.
-    broken = np.isnan(level) | np.isnan(adapter) | (np.abs(np.nan_to_num(adapter, nan=-1) - state) > 0.05)
+    on_ac, charged = round(row[0]), round(row[1] or 0)
+
+    def changed(series, state):
+        return np.isnan(series) | (np.abs(np.nan_to_num(series, nan=-1) - state) > 0.05)
+
+    # Any step that isn't entirely in the same state, or mostly asleep, ends the forecast's validity.
+    broken = np.isnan(level) | changed(adapter, on_ac) | changed(charging, charged) | (awake < BATTERY_AWAKE_MINUTES)
     hits = np.flatnonzero(broken)
     if hits.size:
         return int(hits[0])
@@ -597,9 +617,14 @@ def score_due_forecasts(conn, now) -> int:
         if valid.sum() < minimum:
             continue  # Tempra wasn't running for long enough
         a = actual[valid]
-        mae = float(np.mean(np.abs(median[valid] - a)))
-        naive = None if np.isnan(anchor) else float(np.mean(np.abs(anchor - a)))
-        coverage = float(np.mean((low[valid] <= a) & (a <= high[valid])))
+        slack = BATTERY_TOLERANCE if metric == "batt_pct" else 0.0
+
+        def error(predicted):
+            return float(np.mean(np.maximum(np.abs(predicted - a) - slack, 0)))
+
+        mae = error(median[valid])
+        naive = None if np.isnan(anchor) else error(anchor)
+        coverage = float(np.mean((low[valid] - slack <= a) & (a <= high[valid] + slack)))
         conn.execute("INSERT OR REPLACE INTO forecast_scores VALUES (?, ?, ?, ?, ?, ?)",
                      (metric, generated_at, int(valid.sum()), mae, naive, coverage))
         if metric in SYSTEM_VARIATES:

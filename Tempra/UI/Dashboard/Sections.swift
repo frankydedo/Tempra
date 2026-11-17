@@ -274,6 +274,9 @@ struct BatterySection: View {
                         }
                         if let forecast = forecaster.currentBatteryForecast {
                             LastsUntilRow(forecast: forecast, onAdapter: b.onAC)
+                            Text("Battery times assume the Mac stays awake and in use. Asleep, it uses far less.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     Card(title: "Details", systemImage: "info.circle") {

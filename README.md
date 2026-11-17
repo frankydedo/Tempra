@@ -218,7 +218,9 @@ passed, compares it with what actually happened. **Forecasts → Accuracy** show
 Bands calibrate themselves: every scored forecast widens or narrows its metric's band a little, so that over
 time about 80% of what actually happens falls inside it.
 
-Battery forecasts are scored only while the adapter state stays the same as when they were made, and the
+Battery forecasts assume the Mac stays awake and in use, so they are scored only while that holds: same
+adapter state, charging or not as when they were made, and the Mac awake (background wakes during sleep don't
+count). macOS reports the level in whole percents, so a forecast within half a point counts as exact. The
 "held at the charge limit" state is not scored, since it isn't a real prediction.
 
 Forecasts appear after about an hour of history (two hours for battery; the battery health projection from
