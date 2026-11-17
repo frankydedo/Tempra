@@ -40,7 +40,9 @@ enum HealthMetric: CaseIterable {
 }
 
 enum HealthRules {
-    /// CPU and GPU use the average of the last minute: short spikes are normal.
+    /// CPU and GPU use the average of the last minute: short spikes are normal. CPU counts only the
+    /// performance cores, since macOS keeps background work on the efficiency cores: after a restart
+    /// indexing fills those for minutes while the Mac stays responsive.
     static let loadWindow: TimeInterval = 60
     static let loadWarning = 0.75
     static let loadCritical = 0.90
@@ -89,7 +91,7 @@ extension Snapshot {
     func health(_ metric: HealthMetric, live: [Metric: [ChartPoint]]) -> HealthState {
         switch metric {
         case .cpu:
-            return Self.loadState(Self.recentAverage(live[.cpu]) ?? cpuTotal)
+            return Self.loadState(Self.recentAverage(live[.cpuPerformance]) ?? performanceCoreLoad)
         case .gpu:
             return gpuState(live: live)
         case .memory:
@@ -150,7 +152,7 @@ extension Snapshot {
         let margin = HealthRules.exitMargin
         switch metric {
         case .cpu:
-            return Self.loadState(Self.recentAverage(live[.cpu]) ?? cpuTotal, margin: margin)
+            return Self.loadState(Self.recentAverage(live[.cpuPerformance]) ?? performanceCoreLoad, margin: margin)
         case .gpu:
             return gpuState(live: live, margin: margin)
         case .memory:
@@ -168,7 +170,8 @@ extension Snapshot {
     func healthDetail(_ metric: HealthMetric, live: [Metric: [ChartPoint]]) -> String {
         switch metric {
         case .cpu:
-            return String(format: "CPU %.0f%%, 1-min avg %.0f%%", cpuTotal * 100, (Self.recentAverage(live[.cpu]) ?? cpuTotal) * 100)
+            return String(format: "CPU %.0f%%, performance cores %.0f%%, 1-min avg %.0f%%", cpuTotal * 100, performanceCoreLoad * 100,
+                          (Self.recentAverage(live[.cpuPerformance]) ?? performanceCoreLoad) * 100)
         case .gpu:
             return String(format: "GPU %.0f%%, 1-min avg %.0f%% at %.1f W", (gpu ?? 0) * 100,
                           (Self.recentAverage(live[.gpu]) ?? gpu ?? 0) * 100, Self.recentAverage(live[.gpuPower]) ?? power.gpu ?? 0)

@@ -4,6 +4,7 @@ import SwiftUI
 /// (also used by the Python forecaster, so keep them in sync with `forecaster/worker.py`).
 enum Metric: String, CaseIterable, Identifiable, Sendable {
     case cpu
+    case cpuPerformance = "cpu_p"
     case gpu
     case memUsed = "mem_used"
     case memPressure = "mem_pressure"
@@ -33,6 +34,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .cpu: "CPU"
+        case .cpuPerformance: "Performance Cores"
         case .gpu: "GPU"
         case .memUsed: "Memory Used"
         case .memPressure: "Memory Pressure"
@@ -61,7 +63,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
 
     var unit: MetricUnit {
         switch self {
-        case .cpu, .gpu, .memUsed, .memPressure, .swap: .fraction
+        case .cpu, .cpuPerformance, .gpu, .memUsed, .memPressure, .swap: .fraction
         case .socTemp, .socTempMax, .batteryTemp: .celsius
         case .fanRPM: .rpm
         case .batteryPercent: .percent
@@ -73,7 +75,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
 
     var color: Color {
         switch self {
-        case .cpu: .blue
+        case .cpu, .cpuPerformance: .blue
         case .gpu: .indigo
         case .memUsed, .memPressure, .swap, .swapOut: .purple
         case .socTemp, .socTempMax, .batteryTemp: .orange
@@ -101,6 +103,7 @@ enum Metric: String, CaseIterable, Identifiable, Sendable {
     func value(from s: Snapshot) -> Double? {
         switch self {
         case .cpu: s.cpuTotal
+        case .cpuPerformance: s.performanceCoreLoad
         case .gpu: s.gpu
         case .memUsed: s.memUsedFraction
         case .memPressure: s.memPressure

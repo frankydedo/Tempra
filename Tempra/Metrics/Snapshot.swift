@@ -10,6 +10,12 @@ struct Snapshot: Sendable {
     var cpuSystem: Double = 0
     var cpuCores: [Double] = []
     var efficiencyCoreCount = 0
+    /// Load of the performance cores only (the efficiency cores come first). Background work
+    /// (Spotlight, Siri and photo analysis after a restart) is kept on the efficiency cores.
+    var performanceCoreLoad: Double {
+        let performance = cpuCores.dropFirst(efficiencyCoreCount)
+        return performance.isEmpty ? cpuTotal : performance.reduce(0, +) / Double(performance.count)
+    }
     var loadAverage: (Double, Double, Double) = (0, 0, 0)
 
     // GPU (fractions 0...1, memory in bytes)
